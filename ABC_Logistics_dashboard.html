@@ -1307,10 +1307,17 @@ document.addEventListener("DOMContentLoaded", function() {
       if (el) { el.value = id === "prod-qty" ? 1 : ""; el.style.borderColor = "var(--border)"; }
     });
     updateSubtotal();
-    applyFilter("1y");
+    if (scope === "session") {
+      applyFilter("1y");
+    } else {
+      resetAnalytics();
+      document.querySelectorAll(".time-filter-pills .pill").forEach(function(p) {
+        p.classList.remove("active");
+      });
+    }
     var msg = scope === "session"
       ? "Session entries cleared across all tabs. Seed data retained."
-      : "All data cleared across all tabs.";
+      : "All data cleared across all tabs, including Analytics.";
     window.showToast(msg, "success");
   }
 
@@ -1377,23 +1384,33 @@ function resetAnalytics(){
  try{
   if(window.lineChart){
     lineChart.data.labels=[];
-    lineChart.data.datasets.forEach(d=>d.data=[]);
+    lineChart.data.datasets.forEach(function(d){ d.data=[]; });
     lineChart.update();
   }
   if(window.barChart){
     barChart.data.labels=[];
-    barChart.data.datasets.forEach(d=>d.data=[]);
+    barChart.data.datasets.forEach(function(d){ d.data=[]; });
     barChart.update();
   }
   if(window.doughnutChart){
-    doughnutChart.data.datasets.forEach(d=>d.data=[]);
+    doughnutChart.data.labels=[];
+    doughnutChart.data.datasets.forEach(function(d){ d.data=[]; });
     doughnutChart.update();
   }
-  ["freight","express","courier","bulk","cold"].forEach(k=>{
-    let t=document.getElementById("ot-"+k);
-    let b=document.getElementById("ot-"+k+"-bar");
+  if(window.regionChart){
+    regionChart.data.labels=[];
+    regionChart.data.datasets.forEach(function(d){ d.data=[]; });
+    regionChart.update();
+  }
+  ["freight","express","courier","bulk","cold"].forEach(function(k){
+    var t=document.getElementById("ot-"+k);
+    var b=document.getElementById("ot-"+k+"-bar");
     if(t) t.textContent="0%";
-    if(b) b.style.width="0%";
+    if(b){ b.style.width="0%"; b.style.background="var(--border)"; }
+  });
+  ["line-badge","donut-badge","bar-badge","region-badge","ontime-badge"].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.textContent="No data";
   });
  }catch(e){console.log(e);}
 }
