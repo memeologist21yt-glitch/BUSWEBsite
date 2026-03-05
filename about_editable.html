@@ -3,13 +3,25 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>About Me</title>
+<title>About the Developrs</title>
 
 <style>
+:root {
+--bg:#f0f2f5;
+--surface:#ffffff;
+--surface2:#f7f8fa;
+--border:#e4e7ec;
+--accent:#0057ff;
+--accent-light:#e8eeff;
+--text:#0f1523;
+--muted:#8a92a6;
+--shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 16px rgba(0,0,0,0.04);
+}
+
 body{
-font-family:Arial;
-background:#0f1523;
-color:white;
+font-family:"Plus Jakarta Sans",Arial,sans-serif;
+background:var(--bg);
+color:var(--text);
 margin:0;
 }
 
@@ -18,13 +30,20 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 padding:16px 24px;
-background:#111827;
+background:var(--surface);
+border-bottom:1px solid var(--border);
+box-shadow:var(--shadow);
 }
 
 .top-nav a{
-color:white;
+color:var(--muted);
 text-decoration:none;
 margin-left:20px;
+font-weight:600;
+}
+
+.top-nav a:hover{
+color:var(--accent);
 }
 
 .container{
@@ -34,20 +53,31 @@ padding:40px;
 }
 
 .card{
-background:#1f2937;
+background:var(--surface);
+border:1px solid var(--border);
+box-shadow:var(--shadow);
 padding:30px;
-border-radius:10px;
+border-radius:14px;
 margin-bottom:20px;
 }
 
 .edit-btn{
-background:#2563eb;
+background:var(--accent);
 border:none;
 color:white;
 padding:10px 16px;
 border-radius:6px;
 cursor:pointer;
 margin-bottom:20px;
+font-weight:600;
+}
+
+h1,h2{
+color:var(--text);
+}
+
+p, li{
+color:#2f3a4f;
 }
 </style>
 
@@ -68,27 +98,11 @@ margin-bottom:20px;
 <button class="edit-btn" onclick="toggleEdit()">Edit Page</button>
 
 <div class="card" contenteditable="false">
-<h1>About Me</h1>
-<p>Click edit to start writing about yourself.</p>
-</div>
-
-<div class="card" contenteditable="false">
-<h2>Background</h2>
-<p>Add your personal background, education, or experience here.</p>
-</div>
-
-<div class="card" contenteditable="false">
-<h2>Skills</h2>
-<ul>
-<li>Logistics</li>
-<li>Supply Chain Analytics</li>
-<li>Dashboard Development</li>
-</ul>
-</div>
-
-<div class="card" contenteditable="false">
-<h2>Projects</h2>
-<p>Describe the ABC Logistics dashboard and other projects you want to showcase.</p>
+<h1>About the Developrs</h1>
+<p><strong>Name:</strong> Kian</p>
+<p><strong>Role:</strong> Project Manager</p>
+<p>Having extensive experience in creating websites, but works with multiple teams.</p>
+<p>Additional consultation from Junior Developers Claude, ChatGPT, and Gemini.</p>
 </div>
 
 </div>
