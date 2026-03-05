@@ -285,7 +285,7 @@ body{padding-top:60px;}
     </div>
     <div class="charts-row">
       <div class="card"><div class="card-header"><div class="card-title">Revenue Over Time</div><div class="card-badge" id="line-badge">Last 12 months</div></div><canvas id="lineChart" height="110"></canvas></div>
-      <div class="card"><div class="card-header"><div class="card-title">Shipments by Type</div><div class="card-badge" id="donut-badge">This year</div></div><canvas id="doughnutChart" height="160"></canvas></div>
+      <div class="card"><div class="card-header"><div class="card-title">Shipments by Type</div><div style="display:flex;align-items:center;gap:8px"><button class="btn-sm" id="toggle-donut-chart">Bar View</button><div class="card-badge" id="donut-badge">This year</div></div></div><canvas id="doughnutChart" height="160"></canvas></div>
     </div>
     <div class="form-grid">
       <div class="input-card">
@@ -338,7 +338,7 @@ body{padding-top:60px;}
     </div>
     <div class="charts-row">
       <div class="card"><div class="card-header"><div class="card-title">Monthly Shipment Volume</div><div class="card-badge" id="bar-badge">Last 12 months</div></div><canvas id="barChart" height="120"></canvas></div>
-      <div class="card"><div class="card-header"><div class="card-title">Revenue by Region</div><div class="card-badge" id="region-badge">This year</div></div><canvas id="regionChart" height="160"></canvas></div>
+      <div class="card"><div class="card-header"><div class="card-title">Revenue by Region</div><div style="display:flex;align-items:center;gap:8px"><button class="btn-sm" id="toggle-region-chart">Bar View</button><div class="card-badge" id="region-badge">This year</div></div></div><canvas id="regionChart" height="160"></canvas></div>
     </div>
     <div class="charts-3">
       <div class="card"><div class="card-header"><div class="card-title">On-Time Performance</div><div class="card-badge" id="ontime-badge">This year</div></div>
@@ -815,14 +815,48 @@ document.addEventListener("DOMContentLoaded", function() {
           callback:function(v){return "$"+(v>=1000?(v/1000).toFixed(0)+"k":v);}}} } }
   });
 
-  var doughnutChart = new Chart(document.getElementById("doughnutChart"), {
-    type:"doughnut",
-    data:{ labels:["Freight","Express","Courier","Bulk Cargo","Cold Chain"],
-      datasets:[{data:[],backgroundColor:DONUT_COLORS,borderColor:"#fff",borderWidth:3,hoverOffset:6}] },
-    options:{ responsive:true, cutout:"66%", plugins:{
-      legend:{position:"bottom",labels:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11},padding:14,boxWidth:10,boxHeight:10}},
-      tooltip:{...TOOLTIP_OPTS, callbacks:{label:function(c){return "  "+c.parsed+"%";}}} } }
-  });
+  var donutAsBar = false;
+  var regionAsBar = false;
+
+  function buildDistributionChart(canvasId, labels, values, colors, asBar) {
+    return new Chart(document.getElementById(canvasId), {
+      type: asBar ? "bar" : "doughnut",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Share",
+          data: values || [],
+          backgroundColor: asBar ? colors.map(function(c){ return c+"33"; }) : colors,
+          borderColor: asBar ? colors : "#fff",
+          borderWidth: asBar ? 2 : 3,
+          borderRadius: asBar ? 6 : 0,
+          hoverOffset: asBar ? 0 : 6
+        }]
+      },
+      options: {
+        responsive: true,
+        cutout: asBar ? 0 : "63%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11},padding:12,boxWidth:10,boxHeight:10}
+          },
+          tooltip: {...TOOLTIP_OPTS, callbacks:{label:function(c){ var v = (c.parsed && c.parsed.y !== undefined) ? c.parsed.y : c.parsed; return "  "+v+"%"; }}}
+        },
+        scales: asBar ? {
+          x:{grid:{display:false},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11}}},
+          y:{beginAtZero:true,grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11},callback:function(v){return v+"%";}}}
+        } : {}
+      }
+    });
+  }
+
+  function setChartToggleButton(buttonId, isBar) {
+    var button = document.getElementById(buttonId);
+    if (button) button.textContent = isBar ? "Pie View" : "Bar View";
+  }
+
+  var doughnutChart = buildDistributionChart("doughnutChart", ["Freight","Express","Courier","Bulk Cargo","Cold Chain"], [], DONUT_COLORS, donutAsBar);
 
   var barChart = new Chart(document.getElementById("barChart"), {
     type:"bar",
@@ -833,15 +867,7 @@ document.addEventListener("DOMContentLoaded", function() {
         y:{grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11}}} } }
   });
 
-  var regionChart = new Chart(document.getElementById("regionChart"), {
-    type:"doughnut",
-    data:{ labels:["BC","Ontario","Quebec","Alberta","Atlantic"],
-      datasets:[{data:[],backgroundColor:["#0057ff","#00c897","#a259ff","#ffac00","#ff4d6a"],borderColor:"#fff",borderWidth:3,hoverOffset:6}] },
-    options:{ responsive:true, cutout:"60%", plugins:{
-      legend:{position:"bottom",labels:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11},padding:12,boxWidth:10,boxHeight:10}},
-      tooltip:{...TOOLTIP_OPTS, callbacks:{label:function(c){return "  "+c.parsed+"%";}}} } }
-  });
-
+  var regionChart = buildDistributionChart("regionChart", ["BC","Ontario","Quebec","Alberta","Atlantic"], [], ["#0057ff","#00c897","#a259ff","#ffac00","#ff4d6a"], regionAsBar);
   // ── Per-tab KPI data for each time range ──────────────────────────────────
   var tabData = {
     "1w": {
@@ -958,6 +984,30 @@ document.addEventListener("DOMContentLoaded", function() {
       p.classList.toggle("active", p.dataset.range === range);
     });
   }
+
+
+  function toggleDistributionChart(kind) {
+    var d = filterData[activeRange];
+    if (kind === "donut") {
+      donutAsBar = !donutAsBar;
+      doughnutChart.destroy();
+      doughnutChart = buildDistributionChart("doughnutChart", ["Freight","Express","Courier","Bulk Cargo","Cold Chain"], d.donut, DONUT_COLORS, donutAsBar);
+      setChartToggleButton("toggle-donut-chart", donutAsBar);
+      return;
+    }
+
+    regionAsBar = !regionAsBar;
+    regionChart.destroy();
+    regionChart = buildDistributionChart("regionChart", ["BC","Ontario","Quebec","Alberta","Atlantic"], d.region, ["#0057ff","#00c897","#a259ff","#ffac00","#ff4d6a"], regionAsBar);
+    setChartToggleButton("toggle-region-chart", regionAsBar);
+  }
+
+  var donutToggleButton = document.getElementById("toggle-donut-chart");
+  if (donutToggleButton) donutToggleButton.addEventListener("click", function(){ toggleDistributionChart("donut"); });
+  var regionToggleButton = document.getElementById("toggle-region-chart");
+  if (regionToggleButton) regionToggleButton.addEventListener("click", function(){ toggleDistributionChart("region"); });
+  setChartToggleButton("toggle-donut-chart", donutAsBar);
+  setChartToggleButton("toggle-region-chart", regionAsBar);
 
   // One listener for every pill group across all tabs
   document.querySelectorAll(".time-filter-pills .pill").forEach(function(pill) {
