@@ -712,6 +712,27 @@ document.addEventListener("DOMContentLoaded", function() {
   var transactions = SEED.slice();
   var entries = [];
 
+  function setupNumberInputPersistence() {
+    var storagePrefix = "abc-logistics:number-input:";
+    var numberInputs = document.querySelectorAll('input[type="number"]');
+
+    numberInputs.forEach(function(input, index) {
+      var keySuffix = input.id ? ("id:" + input.id) : ("index:" + index);
+      var storageKey = storagePrefix + keySuffix;
+      var savedValue = localStorage.getItem(storageKey);
+
+      if (savedValue !== null) {
+        input.value = savedValue;
+      }
+
+      input.addEventListener("input", function() {
+        localStorage.setItem(storageKey, input.value);
+      });
+    });
+  }
+
+  setupNumberInputPersistence();
+
   // TABLE
   function renderTable() {
     var body = document.getElementById("tx-table-body");
@@ -1326,6 +1347,7 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("add-btn").addEventListener("click", addEntry);
   document.getElementById("prod-price").addEventListener("input", updateSubtotal);
   document.getElementById("prod-qty").addEventListener("input", updateSubtotal);
+  updateSubtotal();
   ["prod-name","prod-price","prod-qty"].forEach(function(eid) {
     document.getElementById(eid).addEventListener("keydown", function(e){ if (e.key === "Enter") addEntry(); });
   });
