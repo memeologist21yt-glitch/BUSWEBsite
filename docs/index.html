@@ -1142,6 +1142,11 @@ document.addEventListener("DOMContentLoaded", function() {
     nEl.style.borderColor = pEl.style.borderColor = qEl.style.borderColor = "var(--border)";
 
     if (!name) { nEl.style.borderColor = "var(--accent3)"; window.showToast("Shipment description cannot be empty.", "error"); nEl.focus(); return; }
+    var normalizedName = name.toLowerCase();
+    var hasDuplicate = entries.some(function(entry) {
+      return entry.name.trim().toLowerCase() === normalizedName;
+    });
+    if (hasDuplicate) { nEl.style.borderColor = "var(--accent3)"; window.showToast("This item is a duplicate.", "error"); nEl.focus(); return; }
     if (isNaN(price) || price <= 0) { pEl.style.borderColor = "var(--accent3)"; window.showToast("Unit price must be a positive number greater than zero.", "error"); pEl.focus(); return; }
     if (qty < 1) { qEl.style.borderColor = "var(--accent3)"; window.showToast("Quantity must be a positive whole number of at least 1.", "error"); qEl.focus(); return; }
 
