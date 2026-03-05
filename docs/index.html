@@ -711,6 +711,9 @@ document.addEventListener("DOMContentLoaded", function() {
   ];
   var ADDITIONAL_TRANSACTIONS_STORAGE_KEY = "abc-logistics:additional-transactions";
   var SHIPMENT_DESCRIPTION_STORAGE_KEY = "abc-logistics:shipment-description-draft";
+  var SHIPMENT_PRICE_STORAGE_KEY = "abc-logistics:shipment-price-draft";
+  var SHIPMENT_QUANTITY_STORAGE_KEY = "abc-logistics:shipment-quantity-draft";
+  var SHIPMENT_TYPE_STORAGE_KEY = "abc-logistics:shipment-type-draft";
 
   function parseStoredAdditionalTransactions(raw) {
     if (!raw) return [];
@@ -762,6 +765,42 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
+  function setupShipmentDraftPersistence() {
+    var priceInput = document.getElementById("prod-price");
+    var quantityInput = document.getElementById("prod-qty");
+    var typeSelect = document.getElementById("prod-category");
+
+    if (priceInput) {
+      var savedPrice = localStorage.getItem(SHIPMENT_PRICE_STORAGE_KEY);
+      if (savedPrice !== null) {
+        priceInput.value = savedPrice;
+      }
+      priceInput.addEventListener("input", function() {
+        localStorage.setItem(SHIPMENT_PRICE_STORAGE_KEY, priceInput.value);
+      });
+    }
+
+    if (quantityInput) {
+      var savedQuantity = localStorage.getItem(SHIPMENT_QUANTITY_STORAGE_KEY);
+      if (savedQuantity !== null) {
+        quantityInput.value = savedQuantity;
+      }
+      quantityInput.addEventListener("input", function() {
+        localStorage.setItem(SHIPMENT_QUANTITY_STORAGE_KEY, quantityInput.value);
+      });
+    }
+
+    if (typeSelect) {
+      var savedType = localStorage.getItem(SHIPMENT_TYPE_STORAGE_KEY);
+      if (savedType !== null) {
+        typeSelect.value = savedType;
+      }
+      typeSelect.addEventListener("change", function() {
+        localStorage.setItem(SHIPMENT_TYPE_STORAGE_KEY, typeSelect.value);
+      });
+    }
+  }
+
   var additionalTransactions = parseStoredAdditionalTransactions(localStorage.getItem(ADDITIONAL_TRANSACTIONS_STORAGE_KEY));
   var transactions = SEED.map(function(tx) {
     tx.seed = true;
@@ -790,6 +829,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   setupNumberInputPersistence();
   setupShipmentDescriptionPersistence();
+  setupShipmentDraftPersistence();
 
   // TABLE
   function renderTable() {
@@ -1153,6 +1193,9 @@ document.addEventListener("DOMContentLoaded", function() {
     entries.push({ id: Date.now(), name: name, price: price, qty: qty, cat: cat });
     nEl.value = ""; pEl.value = ""; qEl.value = 1;
     localStorage.setItem(SHIPMENT_DESCRIPTION_STORAGE_KEY, "");
+    localStorage.setItem(SHIPMENT_PRICE_STORAGE_KEY, "");
+    localStorage.setItem(SHIPMENT_QUANTITY_STORAGE_KEY, "1");
+    localStorage.setItem(SHIPMENT_TYPE_STORAGE_KEY, cat);
     updateSubtotal();
     renderEntries();
     window.showToast("Shipment added to ongoing list.", "success");
