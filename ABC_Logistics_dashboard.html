@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ABC Logistics — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js">
+function resetAnalytics(){
+try{
+ if(window.lineChart){
+   lineChart.data.labels=[];
+   lineChart.data.datasets.forEach(d=>d.data=[]);
+   lineChart.update();
+ }
+ if(window.barChart){
+   barChart.data.labels=[];
+   barChart.data.datasets.forEach(d=>d.data=[]);
+   barChart.update();
+ }
+ if(window.doughnutChart){
+   doughnutChart.data.datasets.forEach(d=>d.data=[]);
+   doughnutChart.update();
+ }
+ ["freight","express","courier","bulk","cold"].forEach(k=>{
+   let t=document.getElementById("ot-"+k);
+   let b=document.getElementById("ot-"+k+"-bar");
+   if(t) t.textContent="0%";
+   if(b) b.style.width="0%";
+ });
+}catch(e){console.log(e);}
+}
+
+</script>
+<style>
+:root {
+  --bg:#f0f2f5; --surface:#fff; --surface2:#f7f8fa; --border:#e4e7ec;
+  --accent:#0057ff; --accent-light:#e8eeff; --accent2:#00c897; --accent3:#ff4d6a;
+  --text:#0f1523; --muted:#8a92a6; --green:#00c897; --warn:#ffac00;
+  --sidebar-w:252px; --shadow:0 1px 3px rgba(0,0,0,0.07),0 4px 16px rgba(0,0,0,0.04);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.logo-mark{width:34px;height:34px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.logo-name{font-size:14px;font-weight:800;letter-spacing:-0.3px;color:var(--text);line-height:1.1;}
+.logo-sub{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;}
+.sidebar-section{padding:18px 20px 5px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;margin:1px 8px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all 0.18s;border-radius:8px;user-select:none;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--accent);background:var(--accent-light);font-weight:600;}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;opacity:0.7;}
+.nav-item.active .icon{opacity:1;}
+.sidebar-footer{margin-top:auto;padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.footer-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#6c8fff);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.footer-info strong{display:block;font-size:13px;font-weight:600;color:var(--text);}
+.footer-info span{font-size:11px;color:var(--muted);}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-title{font-size:17px;font-weight:700;letter-spacing:-0.3px;color:var(--text);}
+.topbar-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.live-tag{background:rgba(0,200,151,0.1);color:var(--green);border:1px solid rgba(0,200,151,0.25);padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:5px;}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.clock-chip{background:var(--surface2);border:1px solid var(--border);padding:5px 12px;border-radius:8px;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--muted);}
+.top-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#6c8fff);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+
+/* PAGES */
+.page{display:none;padding:28px 32px;flex-direction:column;gap:24px;animation:fadeUp 0.3s ease both;}
+.page.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* COMMON CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.card-title{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-0.2px;}
+.card-badge{font-size:10px;font-weight:600;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:3px 9px;border-radius:20px;}
+canvas{width:100%!important;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);transition:transform 0.2s,box-shadow 0.2s;}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,0.1);}
+.kpi-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px;}
+.kpi-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.kpi-value{font-size:26px;font-weight:800;letter-spacing:-0.8px;line-height:1;margin-bottom:6px;color:var(--text);}
+.kpi-change{font-size:12px;font-weight:500;}
+.kpi-change.up{color:var(--green);}
+.kpi-change.down{color:var(--accent3);}
+
+/* TABLES */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.table-card .card-header{padding:16px 22px;border-bottom:1px solid var(--border);margin:0;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:10px 20px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;background:var(--surface2);border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#fafbfc;}
+tbody td{padding:12px 20px;font-size:13px;font-weight:500;color:var(--text);}
+.tx-id{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent);font-weight:500;}
+.price-cell{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:13px;}
+.status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.status::before{content:"";width:5px;height:5px;border-radius:50%;}
+.status.completed{background:rgba(0,200,151,0.1);color:var(--green);}
+.status.completed::before{background:var(--green);}
+.status.pending{background:rgba(255,172,0,0.1);color:#c98a00;}
+.status.pending::before{background:var(--warn);}
+.status.failed,.status.inactive{background:rgba(255,77,106,0.1);color:var(--accent3);}
+.status.failed::before,.status.inactive::before{background:var(--accent3);}
+.status.active{background:rgba(0,87,255,0.1);color:var(--accent);}
+.status.active::before{background:var(--accent);}
+.status.maintenance{background:rgba(255,172,0,0.1);color:#c98a00;}
+.status.maintenance::before{background:var(--warn);}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.input-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);}
+.field-group{margin-bottom:13px;}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:7px;display:block;}
+.form-input,.form-select{width:100%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);padding:10px 13px;border-radius:9px;font-family:"Plus Jakarta Sans",sans-serif;font-size:13px;font-weight:500;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,87,255,0.1);}
+.form-input::placeholder{color:var(--muted);font-weight:400;}
+.form-select option{background:#fff;}
+.input-row{display:flex;gap:10px;}
+.input-row .form-input,.input-row .form-select{flex:1;}
+.subtotal-hint{font-size:11px;color:var(--muted);text-align:right;margin-top:5px;font-weight:500;}
+.subtotal-hint span{color:var(--accent);font-weight:700;}
+.btn-primary{width:100%;background:var(--accent);color:#fff;border:none;padding:11px 20px;border-radius:9px;font-family:"Plus Jakarta Sans",sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.btn-primary:hover{background:#0047d9;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,87,255,0.3);}
+.btn-primary:active{transform:translateY(0);}
+.btn-remove{background:transparent;color:var(--accent3);border:1px solid rgba(255,77,106,0.3);padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.btn-remove:hover{background:rgba(255,77,106,0.08);border-color:var(--accent3);}
+.btn-complete{background:transparent;color:var(--green);border:1px solid rgba(0,200,151,0.3);padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.btn-complete:hover{background:rgba(0,200,151,0.08);border-color:var(--green);}
+.btn-clear{background:transparent;color:var(--muted);border:1px solid var(--border);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:"Plus Jakarta Sans",sans-serif;}
+.btn-clear:hover{background:rgba(255,77,106,0.07);color:var(--accent3);border-color:rgba(255,77,106,0.3);}
+.btn-sm{background:var(--accent-light);color:var(--accent);border:1px solid rgba(0,87,255,0.2);padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:"Plus Jakarta Sans",sans-serif;}
+.btn-sm:hover{background:var(--accent);color:#fff;}
+.total-bar{margin-top:14px;padding:12px 16px;background:var(--accent-light);border:1.5px solid rgba(0,87,255,0.15);border-radius:10px;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:var(--accent);}
+.total-bar span:last-child{font-size:18px;font-weight:800;}
+
+/* PROGRESS BARS */
+.progress-wrap{margin-bottom:14px;}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:5px;}
+.progress-bar{height:7px;background:var(--surface2);border-radius:20px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:20px;transition:width 0.6s ease;}
+
+/* SETTINGS TOGGLE */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border-bottom:none;}
+.setting-info strong{display:block;font-size:13px;font-weight:600;margin-bottom:2px;}
+.setting-info span{font-size:12px;color:var(--muted);}
+.toggle{width:40px;height:22px;background:var(--border);border-radius:20px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle.on::after{transform:translateX(18px);}
+
+/* INTEGRATION CARDS */
+.integration-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.int-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;}
+.int-info{display:flex;align-items:center;gap:12px;}
+.int-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.int-name{font-size:13px;font-weight:700;}
+.int-desc{font-size:11px;color:var(--muted);margin-top:1px;}
+
+/* EMPTY STATE */
+.empty-state{color:var(--muted);font-size:12px;padding:24px 0;text-align:center;font-weight:500;}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.charts-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+/* TIME FILTER PILLS */
+.time-filter-pills{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{background:var(--surface2);border:1.5px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;font-family:"Plus Jakarta Sans",sans-serif;}
+.pill:hover{border-color:var(--accent);color:var(--accent);}
+.pill.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;background:#1a1a2e;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;z-index:9999;opacity:0;transform:translateY(10px);transition:opacity 0.25s,transform 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+.top-nav{
+position:fixed;
+top:0;
+left:0;
+right:0;
+height:56px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 20px;
+background:#0f1523;
+color:white;
+z-index:9999;
+}
+.top-nav a{
+color:white;
+margin-left:18px;
+text-decoration:none;
+font-weight:500;
+}
+body{padding-top:60px;}
+
+</style>
+</head>
+<body>
+
+<header class="top-nav">
+<div class="logo">ABC Logistics</div>
+<nav>
+<a href="ABC_Logistics_dashboard.html">Dashboard</a>
+<a href="about.html">About Me</a>
+</nav>
+</header>
+
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+    </div>
+    <div>
+      <div class="logo-name">ABC Logistics</div>
+      <div class="logo-sub">Operations Hub</div>
+    </div>
+  </div>
+  <div class="sidebar-section">Overview</div>
+  <div class="nav-item active" data-page="dashboard"><span class="icon">&#9638;</span> Dashboard</div>
+  <div class="nav-item" data-page="analytics"><span class="icon">&#9672;</span> Analytics</div>
+  <div class="nav-item" data-page="reports"><span class="icon">&#128196;</span> Reports</div>
+  <div class="sidebar-section">Logistics</div>
+  <div class="nav-item" data-page="shipments"><span class="icon">&#128666;</span> Shipments</div>
+  <div class="nav-item" data-page="fleet"><span class="icon">&#128652;</span> Fleet</div>
+  <div class="nav-item" data-page="customers"><span class="icon">&#128101;</span> Customers</div>
+  <div class="sidebar-section">System</div>
+  <div class="nav-item" data-page="configuration"><span class="icon">&#9881;</span> Configuration</div>
+  <div class="nav-item" data-page="integrations"><span class="icon">&#128268;</span> Integrations</div>
+  <div class="sidebar-footer">
+    <div class="footer-avatar">A</div>
+    <div class="footer-info">
+      <strong>Admin User</strong>
+      <span><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="29484d44404769484b4a45464e405a5d404a5a074a4644">[email&#160;protected]</a></span>
+    </div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-sub" id="page-sub">ABC Logistics — Operations Overview</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-tag"><span class="live-dot"></span> Live</div>
+      <div class="clock-chip" id="clock"></div>
+      <div class="top-avatar">A</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DASHBOARD ═══════════════ -->
+  <div class="page active" id="page-dashboard">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128181;</div><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="kpi-revenue">$0</div><div class="kpi-change up">&#8593; +8.2% vs last month</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#128666;</div><div class="kpi-label">Total Shipments</div><div class="kpi-value" id="kpi-orders">0</div><div class="kpi-change up">&#8593; +12.4% vs last month</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,77,106,0.1)">&#128200;</div><div class="kpi-label">Avg Shipment Value</div><div class="kpi-value" id="kpi-avg">$0.00</div><div class="kpi-change down">&#8595; &minus;2.1% vs last month</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#9989;</div><div class="kpi-label">On-Time Rate</div><div class="kpi-value">94.7%</div><div class="kpi-change up">&#8593; +1.3% vs last month</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Charts</div>
+      <div class="time-filter-pills" id="dash-pills">
+        <button class="pill" data-range="1w">1 Week</button>
+        <button class="pill" data-range="1m">1 Month</button>
+        <button class="pill" data-range="6m">6 Months</button>
+        <button class="pill active" data-range="1y">1 Year</button>
+        <button class="pill" data-range="all">All Time</button>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="card"><div class="card-header"><div class="card-title">Revenue Over Time</div><div class="card-badge" id="line-badge">Last 12 months</div></div><canvas id="lineChart" height="110"></canvas></div>
+      <div class="card"><div class="card-header"><div class="card-title">Shipments by Type</div><div class="card-badge" id="donut-badge">This year</div></div><canvas id="doughnutChart" height="160"></canvas></div>
+    </div>
+    <div class="form-grid">
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:6px"><div class="card-title">Add Ongoing Shipment</div></div>
+        <div class="field-group"><label class="section-label">Shipment Description</label><input type="text" id="prod-name" class="form-input" placeholder="e.g. Freight to Vancouver" autocomplete="off"/></div>
+        <div class="field-group"><label class="section-label">Service Type &amp; Unit Price</label>
+          <div class="input-row">
+            <select id="prod-category" class="form-select"><option>Freight</option><option>Express</option><option>Courier</option><option>Bulk Cargo</option><option>Cold Chain</option><option>Other</option></select>
+            <input type="number" id="prod-price" class="form-input" placeholder="0.00" min="0" step="0.01" style="max-width:130px"/>
+          </div>
+        </div>
+        <div class="field-group"><label class="section-label">Quantity / Units</label><input type="number" id="prod-qty" class="form-input" placeholder="1" min="1" max="9999" value="1"/><div class="subtotal-hint">Subtotal: <span id="subtotal-hint">$0.00</span></div></div>
+        <button class="btn-primary" id="add-btn">+ Add to Ongoing Shipments</button>
+        <div class="total-bar" style="margin-top:14px"><span>Session Total</span><span id="portfolio-total">$0.00</span></div>
+      </div>
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:12px">
+          <div class="card-title">Ongoing Shipments</div>
+          <div style="display:flex;align-items:center;gap:8px"><div id="entry-count" class="card-badge">0 items</div><button class="btn-clear" id="clear-ongoing-btn">Clear All</button></div>
+        </div>
+        <div id="entries-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;"><div class="empty-state">No ongoing shipments.<br>Add one using the form on the left.</div></div>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="card-header">
+        <div class="card-title">Recent Transactions</div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="card-badge" id="tx-count">10 records</div><button class="btn-clear" id="clear-tx-btn">Clear All</button></div>
+      </div>
+      <table><thead><tr><th>Transaction ID</th><th>Customer</th><th>Service</th><th>Type</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody id="tx-table-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ANALYTICS ═══════════════ -->
+  <div class="page" id="page-analytics">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128176;</div><div class="kpi-label">YTD Revenue</div><div class="kpi-value">$1.24M</div><div class="kpi-change up">&#8593; +18.3% YoY</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#128230;</div><div class="kpi-label">Total Deliveries</div><div class="kpi-value">3,847</div><div class="kpi-change up">&#8593; +9.1% YoY</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(162,89,255,0.1)">&#128197;</div><div class="kpi-label">Avg Transit Days</div><div class="kpi-value">2.4</div><div class="kpi-change up">&#8595; &minus;0.3 days</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#128202;</div><div class="kpi-label">Delivery Success</div><div class="kpi-value">97.2%</div><div class="kpi-change up">&#8593; +0.8%</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Analytics</div>
+      <div class="time-filter-pills" id="analytics-pills">
+        <button class="pill" data-range="1w">1 Week</button>
+        <button class="pill" data-range="1m">1 Month</button>
+        <button class="pill" data-range="6m">6 Months</button>
+        <button class="pill active" data-range="1y">1 Year</button>
+        <button class="pill" data-range="all">All Time</button>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="card"><div class="card-header"><div class="card-title">Monthly Shipment Volume</div><div class="card-badge" id="bar-badge">Last 12 months</div></div><canvas id="barChart" height="120"></canvas></div>
+      <div class="card"><div class="card-header"><div class="card-title">Revenue by Region</div><div class="card-badge" id="region-badge">This year</div></div><canvas id="regionChart" height="160"></canvas></div>
+    </div>
+    <div class="charts-3">
+      <div class="card"><div class="card-header"><div class="card-title">On-Time Performance</div><div class="card-badge" id="ontime-badge">This year</div></div>
+        <div class="progress-wrap"><div class="progress-label"><span>Freight</span><span id="ot-freight">96%</span></div><div class="progress-bar"><div class="progress-fill" id="ot-freight-bar" style="width:96%;background:var(--accent)"></div></div></div>
+        <div class="progress-wrap"><div class="progress-label"><span>Express</span><span id="ot-express">98%</span></div><div class="progress-bar"><div class="progress-fill" id="ot-express-bar" style="width:98%;background:var(--green)"></div></div></div>
+        <div class="progress-wrap"><div class="progress-label"><span>Courier</span><span id="ot-courier">94%</span></div><div class="progress-bar"><div class="progress-fill" id="ot-courier-bar" style="width:94%;background:var(--accent)"></div></div></div>
+        <div class="progress-wrap"><div class="progress-label"><span>Bulk Cargo</span><span id="ot-bulk">89%</span></div><div class="progress-bar"><div class="progress-fill" id="ot-bulk-bar" style="width:89%;background:var(--warn)"></div></div></div>
+        <div class="progress-wrap"><div class="progress-label"><span>Cold Chain</span><span id="ot-cold">99%</span></div><div class="progress-bar"><div class="progress-fill" id="ot-cold-bar" style="width:99%;background:var(--green)"></div></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Top Routes</div></div>
+        <table><thead><tr><th>Route</th><th>Trips</th><th>Avg $</th></tr></thead><tbody>
+          <tr><td>YVR → YYZ</td><td>412</td><td class="price-cell">$3,240</td></tr>
+          <tr><td>YYC → YUL</td><td>318</td><td class="price-cell">$2,890</td></tr>
+          <tr><td>YVR → SEA</td><td>276</td><td class="price-cell">$1,450</td></tr>
+          <tr><td>YYZ → YOW</td><td>241</td><td class="price-cell">$980</td></tr>
+          <tr><td>YUL → JFK</td><td>198</td><td class="price-cell">$4,100</td></tr>
+        </tbody></table>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Incident Summary</div></div>
+        <table><thead><tr><th>Type</th><th>Count</th><th>Trend</th></tr></thead><tbody>
+          <tr><td>Delays</td><td>87</td><td style="color:var(--green)">&#8595; &minus;12%</td></tr>
+          <tr><td>Damages</td><td>14</td><td style="color:var(--green)">&#8595; &minus;3%</td></tr>
+          <tr><td>Lost Items</td><td>3</td><td style="color:var(--green)">&#8595; &minus;1%</td></tr>
+          <tr><td>Returns</td><td>52</td><td style="color:var(--accent3)">&#8593; +8%</td></tr>
+          <tr><td>Disputes</td><td>9</td><td style="color:var(--green)">&#8595; &minus;5%</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ REPORTS ═══════════════ -->
+  <div class="page" id="page-reports">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Reports</div>
+      <div class="time-filter-pills" id="reports-pills">
+        <button class="pill" data-range="1w">1 Week</button>
+        <button class="pill" data-range="1m">1 Month</button>
+        <button class="pill" data-range="6m">6 Months</button>
+        <button class="pill active" data-range="1y">1 Year</button>
+        <button class="pill" data-range="all">All Time</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128196;</div><div class="kpi-label">Reports Generated</div><div class="kpi-value" id="r-generated">142</div><div class="kpi-change up" id="r-gen-sub">&#8593; This year</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#128338;</div><div class="kpi-label">Last Generated</div><div class="kpi-value" style="font-size:18px">Today 09:14</div><div class="kpi-change up">Scheduled daily</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(162,89,255,0.1)">&#128101;</div><div class="kpi-label">Shared With</div><div class="kpi-value" id="r-shared">8</div><div class="kpi-change up">Team members</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#128190;</div><div class="kpi-label">Exports</div><div class="kpi-value" id="r-exports">34</div><div class="kpi-change up" id="r-exports-sub">PDF &amp; CSV</div></div>
+    </div>
+    <div class="table-card">
+      <div class="card-header"><div class="card-title">Saved Reports</div><div class="card-badge" id="reports-badge">7 reports</div></div>
+      <table><thead><tr><th>Report Name</th><th>Type</th><th>Period</th><th>Generated</th><th>Size</th><th>Action</th></tr></thead><tbody id="reports-tbody"></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Generate New Report</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+        <div><label class="section-label">Report Type</label><select class="form-select"><option>Revenue Summary</option><option>Shipment Performance</option><option>Fleet Utilisation</option><option>Customer Report</option><option>Incident Log</option></select></div>
+        <div><label class="section-label">Period</label><select class="form-select"><option>This Month</option><option>Last Month</option><option>This Quarter</option><option>YTD</option><option>Custom</option></select></div>
+        <div><label class="section-label">Format</label><select class="form-select"><option>PDF</option><option>CSV</option><option>Excel</option></select></div>
+        <button class="btn-primary" style="margin-top:0;width:auto;padding:10px 24px" onclick="window.showToast('Report generation queued. You will be notified when ready.')">Generate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SHIPMENTS ═══════════════ -->
+  <div class="page" id="page-shipments">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Shipments</div>
+      <div class="time-filter-pills" id="shipments-pills">
+        <button class="pill" data-range="1w">1 Week</button>
+        <button class="pill" data-range="1m">1 Month</button>
+        <button class="pill" data-range="6m">6 Months</button>
+        <button class="pill active" data-range="1y">1 Year</button>
+        <button class="pill" data-range="all">All Time</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#10003;</div><div class="kpi-label">Completed</div><div class="kpi-value" id="sh-completed">1,284</div><div class="kpi-change up" id="sh-completed-sub">&#8593; This year</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#8987;</div><div class="kpi-label">In Transit</div><div class="kpi-value" id="sh-transit">47</div><div class="kpi-change up">Currently active</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128203;</div><div class="kpi-label">Scheduled</div><div class="kpi-value" id="sh-scheduled">23</div><div class="kpi-change up">Next 7 days</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,77,106,0.1)">&#9888;</div><div class="kpi-label">Exceptions</div><div class="kpi-value" id="sh-exceptions">5</div><div class="kpi-change down" id="sh-exceptions-sub">This year</div></div>
+    </div>
+    <div class="table-card">
+      <div class="card-header"><div class="card-title">Active Shipments</div><div class="card-badge" id="shipments-badge">7 active</div></div>
+      <table><thead><tr><th>Shipment ID</th><th>Origin</th><th>Destination</th><th>Type</th><th>Weight</th><th>ETA</th><th>Status</th></tr></thead><tbody id="shipments-tbody"></tbody></table>
+    </div>
+    <div class="form-grid">
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Book New Shipment</div></div>
+        <div class="field-group"><label class="section-label">Origin</label><input type="text" class="form-input" placeholder="City, Province"/></div>
+        <div class="field-group"><label class="section-label">Destination</label><input type="text" class="form-input" placeholder="City, Province / State"/></div>
+        <div class="field-group"><label class="section-label">Service Type &amp; Weight (kg)</label>
+          <div class="input-row">
+            <select class="form-select"><option>Freight</option><option>Express</option><option>Courier</option><option>Bulk Cargo</option><option>Cold Chain</option></select>
+            <input type="number" class="form-input" placeholder="0" min="0" style="max-width:110px"/>
+          </div>
+        </div>
+        <div class="field-group"><label class="section-label">Pickup Date</label><input type="date" class="form-input"/></div>
+        <button class="btn-primary" onclick="window.showToast('Shipment booking submitted successfully.')">Book Shipment</button>
+      </div>
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Track Shipment</div></div>
+        <div class="field-group"><label class="section-label">Shipment ID</label><input type="text" class="form-input" placeholder="e.g. SHP-44821"/></div>
+        <button class="btn-primary" style="margin-bottom:16px" onclick="window.showToast('Tracking info loaded for SHP-44821.')">Track</button>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Tracking Timeline</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:8px;height:8px;background:var(--green);border-radius:50%;margin-top:4px;flex-shrink:0"></div><div><div style="font-size:13px;font-weight:600">Picked Up — Vancouver, BC</div><div style="font-size:11px;color:var(--muted)">Mar 5, 2026 · 08:30 AM</div></div></div>
+            <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:8px;height:8px;background:var(--green);border-radius:50%;margin-top:4px;flex-shrink:0"></div><div><div style="font-size:13px;font-weight:600">In Transit — Kamloops Hub</div><div style="font-size:11px;color:var(--muted)">Mar 5, 2026 · 03:15 PM</div></div></div>
+            <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:8px;height:8px;background:var(--warn);border-radius:50%;margin-top:4px;flex-shrink:0"></div><div><div style="font-size:13px;font-weight:600">En Route to Calgary Sort Facility</div><div style="font-size:11px;color:var(--muted)">Mar 6, 2026 · 10:00 AM · Est.</div></div></div>
+            <div style="display:flex;gap:12px;align-items:flex-start"><div style="width:8px;height:8px;background:var(--border);border-radius:50%;margin-top:4px;flex-shrink:0"></div><div><div style="font-size:13px;font-weight:600;color:var(--muted)">Out for Delivery — Toronto</div><div style="font-size:11px;color:var(--muted)">Mar 7, 2026 · Est.</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ FLEET ═══════════════ -->
+  <div class="page" id="page-fleet">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Fleet</div>
+      <div class="time-filter-pills" id="fleet-pills">
+        <button class="pill" data-range="1w">1 Week</button>
+        <button class="pill" data-range="1m">1 Month</button>
+        <button class="pill" data-range="6m">6 Months</button>
+        <button class="pill active" data-range="1y">1 Year</button>
+        <button class="pill" data-range="all">All Time</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128652;</div><div class="kpi-label">Total Vehicles</div><div class="kpi-value">38</div><div class="kpi-change up">Full fleet</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#9989;</div><div class="kpi-label">Active</div><div class="kpi-value" id="fl-active">29</div><div class="kpi-change up" id="fl-util">76% utilisation</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#128295;</div><div class="kpi-label">Km Driven</div><div class="kpi-value" id="fl-km">842k</div><div class="kpi-change up" id="fl-km-sub">&#8593; This year</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,77,106,0.1)">&#128295;</div><div class="kpi-label">Maintenance Jobs</div><div class="kpi-value" id="fl-maint">24</div><div class="kpi-change down" id="fl-maint-sub">This year</div></div>
+    </div>
+    <div class="table-card">
+      <div class="card-header"><div class="card-title">Fleet Registry</div><div class="card-badge" id="fleet-badge">7 vehicles</div></div>
+      <table><thead><tr><th>Vehicle ID</th><th>Type</th><th>Make / Model</th><th>Driver</th><th>Last Service</th><th>Mileage</th><th>Status</th></tr></thead><tbody id="fleet-tbody"></tbody></table>
+    </div>
+    <div class="form-grid">
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Register New Vehicle</div></div>
+        <div class="field-group"><label class="section-label">Vehicle Type</label><select class="form-select"><option>Semi Truck</option><option>Refrigerated</option><option>Box Truck</option><option>Flatbed</option><option>Van</option></select></div>
+        <div class="field-group"><label class="section-label">Make &amp; Model</label><input type="text" class="form-input" placeholder="e.g. Volvo FH16"/></div>
+        <div class="field-group"><label class="section-label">Assigned Driver</label><input type="text" class="form-input" placeholder="Driver full name"/></div>
+        <div class="field-group"><label class="section-label">Initial Mileage (km)</label><input type="number" class="form-input" placeholder="0" min="0"/></div>
+        <button class="btn-primary" onclick="window.showToast('Vehicle registered successfully.')">Register Vehicle</button>
+      </div>
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Schedule Maintenance</div></div>
+        <div class="field-group"><label class="section-label">Vehicle ID</label><input type="text" class="form-input" placeholder="e.g. VEH-003"/></div>
+        <div class="field-group"><label class="section-label">Service Type</label><select class="form-select"><option>Routine Service</option><option>Tire Replacement</option><option>Engine Repair</option><option>Brake Service</option><option>Annual Inspection</option></select></div>
+        <div class="field-group"><label class="section-label">Scheduled Date</label><input type="date" class="form-input"/></div>
+        <div class="field-group"><label class="section-label">Notes</label><input type="text" class="form-input" placeholder="Additional details..."/></div>
+        <button class="btn-primary" onclick="window.showToast('Maintenance appointment scheduled.')">Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CUSTOMERS ═══════════════ -->
+  <div class="page" id="page-customers">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Customers</div>
+      <div class="time-filter-pills" id="customers-pills">
+        <button class="pill" data-range="1w">1 Week</button>
+        <button class="pill" data-range="1m">1 Month</button>
+        <button class="pill" data-range="6m">6 Months</button>
+        <button class="pill active" data-range="1y">1 Year</button>
+        <button class="pill" data-range="all">All Time</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128101;</div><div class="kpi-label">Total Customers</div><div class="kpi-value" id="cx-total">284</div><div class="kpi-change up" id="cx-total-sub">&#8593; +14 this month</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#11088;</div><div class="kpi-label">Avg Satisfaction</div><div class="kpi-value" id="cx-sat">4.7/5</div><div class="kpi-change up" id="cx-sat-sub">&#8593; +0.2 pts</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(162,89,255,0.1)">&#128260;</div><div class="kpi-label">Retention Rate</div><div class="kpi-value" id="cx-ret">91.4%</div><div class="kpi-change up" id="cx-ret-sub">&#8593; +2.1%</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#128179;</div><div class="kpi-label">Avg LTV</div><div class="kpi-value" id="cx-ltv">$18,400</div><div class="kpi-change up" id="cx-ltv-sub">&#8593; +$1,200</div></div>
+    </div>
+    <div class="table-card">
+      <div class="card-header"><div class="card-title">Customer Directory</div><div class="card-badge" id="customers-badge">7 accounts</div></div>
+      <table><thead><tr><th>Customer</th><th>Industry</th><th>Contact</th><th>Shipments</th><th>Total Spend</th><th>Rating</th><th>Status</th></tr></thead><tbody id="customers-tbody"></tbody></table>
+    </div>
+    <div class="form-grid">
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Add New Customer</div></div>
+        <div class="field-group"><label class="section-label">Company Name</label><input type="text" class="form-input" placeholder="e.g. Acme Corp"/></div>
+        <div class="field-group"><label class="section-label">Industry</label><select class="form-select"><option>Manufacturing</option><option>Retail</option><option>Technology</option><option>Pharma</option><option>Food &amp; Beverage</option><option>Other</option></select></div>
+        <div class="field-group"><label class="section-label">Contact Email</label><input type="email" class="form-input" placeholder="contact@company.com"/></div>
+        <button class="btn-primary" onclick="window.showToast('New customer account created.')">Add Customer</button>
+      </div>
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Log Customer Note</div></div>
+        <div class="field-group"><label class="section-label">Customer</label><select class="form-select"><option>Acme Corp</option><option>Globex LLC</option><option>Initech</option><option>Umbrella Inc</option><option>Dunder Mifflin</option></select></div>
+        <div class="field-group"><label class="section-label">Note Type</label><select class="form-select"><option>General</option><option>Complaint</option><option>Feedback</option><option>Follow-Up Required</option></select></div>
+        <div class="field-group"><label class="section-label">Note</label><input type="text" class="form-input" placeholder="Enter note details..."/></div>
+        <button class="btn-primary" onclick="window.showToast('Note saved to customer record.')">Save Note</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CONFIGURATION ═══════════════ -->
+  <div class="page" id="page-configuration">
+    <div class="form-grid">
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Company Settings</div></div>
+        <div class="field-group"><label class="section-label">Company Name</label><input type="text" class="form-input" value="ABC Logistics"/></div>
+        <div class="field-group"><label class="section-label">Operations Email</label><input type="email" class="form-input" value="ops@abclogistics.com"/></div>
+        <div class="field-group"><label class="section-label">Default Currency</label><select class="form-select"><option>CAD — Canadian Dollar</option><option>USD — US Dollar</option><option>EUR — Euro</option></select></div>
+        <div class="field-group"><label class="section-label">Timezone</label><select class="form-select"><option>America/Vancouver (PT)</option><option>America/Edmonton (MT)</option><option>America/Toronto (ET)</option><option>America/Halifax (AT)</option></select></div>
+        <button class="btn-primary" onclick="window.showToast('Company settings saved.')">Save Changes</button>
+      </div>
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Notification Preferences</div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Shipment Updates</strong><span>Get notified on status changes</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Exception Alerts</strong><span>Delays, damages, and failures</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Daily Summary</strong><span>Morning digest at 7:00 AM</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Weekly Reports</strong><span>Sent every Monday</span></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Maintenance Reminders</strong><span>7 days before due service</span></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="setting-row"><div class="setting-info"><strong>Customer Alerts</strong><span>At-risk and inactive accounts</span></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">User Management</div></div>
+        <div class="field-group"><label class="section-label">Full Name</label><input type="text" class="form-input" placeholder="New team member name"/></div>
+        <div class="field-group"><label class="section-label">Email</label><input type="email" class="form-input" placeholder="name@abclogistics.com"/></div>
+        <div class="field-group"><label class="section-label">Role</label><select class="form-select"><option>Admin</option><option>Operations Manager</option><option>Dispatcher</option><option>Driver</option><option>Finance</option><option>Read Only</option></select></div>
+        <button class="btn-primary" onclick="window.showToast('User invitation sent.')">Invite User</button>
+      </div>
+      <div class="input-card">
+        <div class="card-header" style="margin-bottom:8px"><div class="card-title">Pricing Rules</div></div>
+        <div class="field-group"><label class="section-label">Base Rate (per km)</label><input type="number" class="form-input" value="1.85" min="0" step="0.01"/></div>
+        <div class="field-group"><label class="section-label">Fuel Surcharge (%)</label><input type="number" class="form-input" value="12.5" min="0" step="0.1"/></div>
+        <div class="field-group"><label class="section-label">Express Premium (%)</label><input type="number" class="form-input" value="35" min="0" step="1"/></div>
+        <div class="field-group"><label class="section-label">Cold Chain Premium (%)</label><input type="number" class="form-input" value="28" min="0" step="1"/></div>
+        <button class="btn-primary" onclick="window.showToast('Pricing rules updated.')">Update Pricing</button>
+      </div>
+    </div>
+    <!-- DANGER ZONE -->
+    <div class="card" style="border:1.5px solid rgba(255,77,106,0.25);background:rgba(255,77,106,0.02)">
+      <div class="card-header" style="margin-bottom:8px">
+        <div class="card-title" style="color:var(--accent3)">&#9888; Danger Zone</div>
+        <span class="card-badge" style="color:var(--accent3);border-color:rgba(255,77,106,0.3);background:rgba(255,77,106,0.05)">Irreversible</span>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Permanently clears data for the selected scope. This action cannot be undone.
+      </p>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <select id="clear-scope" class="form-select" style="width:auto;min-width:240px">
+          <option value="session">Session entries only (new additions)</option>
+          <option value="all">Everything (including seed/historical data)</option>
+        </select>
+        <button id="clear-all-data-btn" style="background:transparent;color:var(--accent3);border:1.5px solid var(--accent3);padding:10px 22px;border-radius:9px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s">
+          &#128465; Clear Data
+        </button>
+        <div id="clear-confirm" style="display:none;align-items:center;gap:10px;background:rgba(255,77,106,0.06);border:1.5px solid rgba(255,77,106,0.3);padding:10px 16px;border-radius:9px;flex-wrap:wrap">
+          <span id="clear-confirm-label" style="font-size:13px;font-weight:600;color:var(--accent3)">&#9888; Are you sure? This cannot be undone.</span>
+          <button id="clear-confirm-yes" style="background:var(--accent3);color:#fff;border:none;padding:7px 16px;border-radius:7px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:12px;cursor:pointer">Yes, clear it</button>
+          <button id="clear-confirm-no" style="background:transparent;color:var(--muted);border:1px solid var(--border);padding:7px 16px;border-radius:7px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:12px;cursor:pointer">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ INTEGRATIONS ═══════════════ -->
+  <div class="page" id="page-integrations">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Integrations</div>
+      <div class="time-filter-pills" id="integrations-pills">
+        <button class="pill" data-range="1w">1 Week</button>
+        <button class="pill" data-range="1m">1 Month</button>
+        <button class="pill" data-range="6m">6 Months</button>
+        <button class="pill active" data-range="1y">1 Year</button>
+        <button class="pill" data-range="all">All Time</button>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#128268;</div><div class="kpi-label">Connected</div><div class="kpi-value">5</div><div class="kpi-change up">Active integrations</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#9203;</div><div class="kpi-label">Pending Setup</div><div class="kpi-value">2</div><div class="kpi-change up">Awaiting config</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128257;</div><div class="kpi-label">API Calls</div><div class="kpi-value" id="int-calls">12,480</div><div class="kpi-change up" id="int-calls-sub">Today</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,77,106,0.1)">&#128683;</div><div class="kpi-label">Failed Syncs</div><div class="kpi-value" id="int-failed">3</div><div class="kpi-change down" id="int-failed-sub">Last 24 hours</div></div>
+    </div>
+    <div class="integration-grid">
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#e8f5e9">&#128230;</div><div><div class="int-name">Canada Post API</div><div class="int-desc">Tracking &amp; rate quotes</div></div></div><span class="status completed">Connected</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#e3f2fd">&#128196;</div><div><div class="int-name">QuickBooks</div><div class="int-desc">Invoicing &amp; accounting</div></div></div><span class="status completed">Connected</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#fff3e0">&#128204;</div><div><div class="int-name">Google Maps</div><div class="int-desc">Route optimisation</div></div></div><span class="status completed">Connected</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#fce4ec">&#128222;</div><div><div class="int-name">Twilio SMS</div><div class="int-desc">Customer notifications</div></div></div><span class="status completed">Connected</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#e8eaf6">&#128202;</div><div><div class="int-name">Salesforce CRM</div><div class="int-desc">Customer relationship mgmt</div></div></div><span class="status completed">Connected</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#f3e5f5">&#128736;</div><div><div class="int-name">SAP ERP</div><div class="int-desc">Enterprise resource planning</div></div></div><span class="status pending">Pending</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#e0f7fa">&#9729;</div><div><div class="int-name">AWS S3</div><div class="int-desc">Document &amp; file storage</div></div></div><span class="status pending">Pending</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#f1f8e9">&#128274;</div><div><div class="int-name">Stripe</div><div class="int-desc">Payment processing</div></div></div><span class="status failed">Disconnected</span></div>
+      <div class="int-card"><div class="int-info"><div class="int-icon" style="background:#fafafa">&#128187;</div><div><div class="int-name">Custom Webhook</div><div class="int-desc">Internal data pipeline</div></div></div><span class="status completed">Connected</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Add New Integration</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+        <div><label class="section-label">Integration Type</label><select class="form-select"><option>REST API</option><option>Webhook</option><option>OAuth 2.0</option><option>SFTP</option><option>EDI</option></select></div>
+        <div><label class="section-label">Endpoint / Service Name</label><input type="text" class="form-input" placeholder="https://api.example.com/v1"/></div>
+        <button class="btn-primary" style="margin-top:0;width:auto;padding:10px 24px" onclick="window.showToast('Integration connection test initiated.')">Connect</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="toast" id="toast"><span id="toast-icon">&#9888;</span><span id="toast-msg"></span></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ── TOAST (global so inline onclick handlers can call it) ──
+var _toastTimer = null;
+window.showToast = function(msg, type) {
+  var t = document.getElementById("toast");
+  var icon = document.getElementById("toast-icon");
+  document.getElementById("toast-msg").textContent = msg;
+  icon.textContent = (type === "error") ? "\u274c" : (type === "success") ? "\u2714" : "\u26a0\ufe0f";
+  t.style.borderLeft = (type === "error") ? "3px solid #ff4d6a" : (type === "success") ? "3px solid #00c897" : "3px solid #ffac00";
+  t.classList.add("show");
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 3200);
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+
+  // CLOCK
+  function updateClock() {
+    document.getElementById("clock").textContent = new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  }
+  setInterval(updateClock, 1000); updateClock();
+
+  // NAV
+  var pageTitles = {
+    dashboard:"Dashboard", analytics:"Analytics", reports:"Reports",
+    shipments:"Shipments", fleet:"Fleet Management", customers:"Customers",
+    configuration:"Configuration", integrations:"Integrations"
+  };
+  var pageSubs = {
+    dashboard:"ABC Logistics — Operations Overview",
+    analytics:"ABC Logistics — Performance Analytics",
+    reports:"ABC Logistics — Reports & Exports",
+    shipments:"ABC Logistics — Shipment Management",
+    fleet:"ABC Logistics — Fleet Registry",
+    customers:"ABC Logistics — Customer Accounts",
+    configuration:"ABC Logistics — System Configuration",
+    integrations:"ABC Logistics — Connected Services"
+  };
+  document.querySelectorAll(".nav-item").forEach(function(item) {
+    item.addEventListener("click", function() {
+      var pg = item.dataset.page;
+      document.querySelectorAll(".nav-item").forEach(function(n){ n.classList.remove("active"); });
+      item.classList.add("active");
+      document.querySelectorAll(".page").forEach(function(p){ p.classList.remove("active"); });
+      var target = document.getElementById("page-" + pg);
+      if (target) target.classList.add("active");
+      document.getElementById("page-title").textContent = pageTitles[pg] || pg;
+      document.getElementById("page-sub").textContent = pageSubs[pg] || "";
+    });
+  });
+
+  // SEED DATA
+  var SEED = [
+    {id:"TXN-00821",customer:"Acme Corp",product:"Freight to Toronto",category:"Freight",amount:12400,date:"2026-02-28",status:"completed"},
+    {id:"TXN-00820",customer:"Globex LLC",product:"Express Delivery",category:"Express",amount:3200,date:"2026-02-27",status:"completed"},
+    {id:"TXN-00819",customer:"Initech",product:"Bulk Cargo — West",category:"Bulk Cargo",amount:8750,date:"2026-02-27",status:"pending"},
+    {id:"TXN-00818",customer:"Umbrella Inc",product:"Cold Chain Shipment",category:"Cold Chain",amount:1100,date:"2026-02-26",status:"completed"},
+    {id:"TXN-00817",customer:"Waystar Royco",product:"Courier Batch x12",category:"Courier",amount:4500,date:"2026-02-25",status:"completed"},
+    {id:"TXN-00816",customer:"Dunder Mifflin",product:"Express — Next Day",category:"Express",amount:699,date:"2026-02-24",status:"failed"},
+    {id:"TXN-00815",customer:"Prestige Worldwide",product:"Freight — East Coast",category:"Freight",amount:2250,date:"2026-02-23",status:"pending"},
+    {id:"TXN-00814",customer:"Sterling Cooper",product:"Bulk Cargo — North",category:"Bulk Cargo",amount:5800,date:"2026-02-22",status:"completed"},
+    {id:"TXN-00813",customer:"Bluth Company",product:"Cold Chain — Pharma",category:"Cold Chain",amount:3150,date:"2026-02-21",status:"completed"},
+    {id:"TXN-00812",customer:"Pied Piper",product:"Courier — Same Day",category:"Courier",amount:9900,date:"2026-02-20",status:"completed"},
+  ];
+  var transactions = SEED.slice();
+  var entries = [];
+
+  // TABLE
+  function renderTable() {
+    var body = document.getElementById("tx-table-body");
+    document.getElementById("tx-count").textContent = transactions.length + " records";
+    if (!transactions.length) {
+      body.innerHTML = "<tr><td colspan='7' style='padding:24px;text-align:center;color:var(--muted);font-size:13px'>No transactions. Add shipments and mark them complete.</td></tr>";
+      return;
+    }
+    body.innerHTML = transactions.map(function(tx) {
+      return "<tr><td class='tx-id'>" + tx.id + "</td><td>" + tx.customer + "</td>" +
+        "<td style='color:var(--muted)'>" + tx.product + "</td>" +
+        "<td><span style='font-size:11px;font-weight:600;color:var(--muted);background:var(--surface2);padding:2px 9px;border-radius:20px;border:1px solid var(--border)'>" + tx.category + "</span></td>" +
+        "<td class='price-cell'>$" + tx.amount.toLocaleString() + "</td>" +
+        "<td style='color:var(--muted);font-size:12px'>" + tx.date + "</td>" +
+        "<td><span class='status " + tx.status + "'>" + tx.status + "</span></td></tr>";
+    }).join("");
+  }
+  renderTable();
+
+  // KPIs
+  function updateKPIs() {
+    var done = transactions.filter(function(t){ return t.status === "completed"; });
+    var total = done.reduce(function(s,t){ return s + t.amount; }, 0);
+    document.getElementById("kpi-revenue").textContent = "$" + total.toLocaleString();
+    document.getElementById("kpi-orders").textContent = done.length;
+    document.getElementById("kpi-avg").textContent = "$" + (done.length ? (total / done.length).toFixed(2) : "0.00");
+  }
+  updateKPIs();
+
+  // ── TIME-FILTER DATA SETS ──────────────────────────────────────────────────
+  var filterData = {
+    "1w": {
+      label: "1 Week",   badgeLine: "Last 7 days", badgeBar: "Last 7 days",
+      badgeDonut: "Last 7 days", badgeRegion: "Last 7 days", badgeOntime: "Last 7 days",
+      lineLabels:  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+      lineValues:  [2100,3400,2800,4100,3700,1200,900],
+      barLabels:   ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+      barValues:   [18,24,20,29,26,9,6],
+      donut:       [30,26,20,14,10],
+      region:      [36,26,17,15,6],
+      ontime:      {freight:94, express:97, courier:91, bulk:86, cold:99}
+    },
+    "1m": {
+      label: "1 Month",  badgeLine: "Last 30 days", badgeBar: "Last 4 weeks",
+      badgeDonut: "Last 30 days", badgeRegion: "Last 30 days", badgeOntime: "Last 30 days",
+      lineLabels:  ["W1","W2","W3","W4"],
+      lineValues:  [18400,21200,19800,23000],
+      barLabels:   ["W1","W2","W3","W4"],
+      barValues:   [98,114,107,121],
+      donut:       [31,25,19,15,10],
+      region:      [35,27,18,14,6],
+      ontime:      {freight:95, express:97, courier:93, bulk:87, cold:99}
+    },
+    "6m": {
+      label: "6 Months", badgeeLine: "Last 6 months", badgeBar: "Last 6 months",
+      badgeDonut: "Last 6 months", badgeRegion: "Last 6 months", badgeOntime: "Last 6 months",
+      lineLabels:  ["Sep","Oct","Nov","Dec","Jan","Feb"],
+      lineValues:  [63200,70100,66800,74500,71200,82400],
+      barLabels:   ["Sep","Oct","Nov","Dec","Jan","Feb"],
+      barValues:   [445,490,460,510,480,540],
+      donut:       [33,23,18,16,10],
+      region:      [34,28,18,14,6],
+      ontime:      {freight:95, express:98, courier:93, bulk:88, cold:99}
+    },
+    "1y": {
+      label: "1 Year",   badgeLine: "Last 12 months", badgeBar: "Last 12 months",
+      badgeDonut: "Last 12 months", badgeRegion: "Last 12 months", badgeOntime: "Last 12 months",
+      lineLabels:  ["Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb"],
+      lineValues:  [41200,38700,52300,48900,61000,57400,63200,70100,66800,74500,71200,82400],
+      barLabels:   ["Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb"],
+      barValues:   [310,280,390,360,420,400,445,490,460,510,480,540],
+      donut:       [32,24,18,16,10],
+      region:      [34,28,18,14,6],
+      ontime:      {freight:96, express:98, courier:94, bulk:89, cold:99}
+    },
+    "all": {
+      label: "All Time", badgeLine: "All time", badgeBar: "All time",
+      badgeDonut: "All time", badgeRegion: "All time", badgeOntime: "All time",
+      lineLabels:  ["2021","2022","2023","2024","2025","2026"],
+      lineValues:  [310000,428000,516000,694000,820000,940000],
+      barLabels:   ["2021","2022","2023","2024","2025","2026"],
+      barValues:   [1840,2310,2780,3420,4100,4820],
+      donut:       [34,22,17,17,10],
+      region:      [32,30,17,15,6],
+      ontime:      {freight:93, express:96, courier:91, bulk:85, cold:98}
+    }
+  };
+
+  var activeRange = "1y";
+  var TOOLTIP_OPTS = {backgroundColor:"#fff",borderColor:"#e4e7ec",borderWidth:1,titleColor:"#0f1523",bodyColor:"#0057ff",padding:10};
+  var DONUT_COLORS = ["#0057ff","#00c897","#ff4d6a","#ffac00","#a259ff"];
+
+  // Build charts and keep references for updates
+  var lineChart = new Chart(document.getElementById("lineChart"), {
+    type:"line",
+    data:{ labels:[], datasets:[{data:[],borderColor:"#0057ff",backgroundColor:"rgba(0,87,255,0.06)",
+      borderWidth:2.5,pointBackgroundColor:"#0057ff",pointRadius:4,pointHoverRadius:6,fill:true,tension:0.4}] },
+    options:{ responsive:true, plugins:{ legend:{display:false},
+      tooltip:{...TOOLTIP_OPTS, callbacks:{label:function(c){return "  $"+c.parsed.y.toLocaleString();}}} },
+      scales:{ x:{grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11}}},
+        y:{grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11},
+          callback:function(v){return "$"+(v>=1000?(v/1000).toFixed(0)+"k":v);}}} } }
+  });
+
+  var doughnutChart = new Chart(document.getElementById("doughnutChart"), {
+    type:"doughnut",
+    data:{ labels:["Freight","Express","Courier","Bulk Cargo","Cold Chain"],
+      datasets:[{data:[],backgroundColor:DONUT_COLORS,borderColor:"#fff",borderWidth:3,hoverOffset:6}] },
+    options:{ responsive:true, cutout:"66%", plugins:{
+      legend:{position:"bottom",labels:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11},padding:14,boxWidth:10,boxHeight:10}},
+      tooltip:{...TOOLTIP_OPTS, callbacks:{label:function(c){return "  "+c.parsed+"%";}}} } }
+  });
+
+  var barChart = new Chart(document.getElementById("barChart"), {
+    type:"bar",
+    data:{ labels:[], datasets:[{label:"Shipments",data:[],
+      backgroundColor:"rgba(0,87,255,0.15)",borderColor:"#0057ff",borderWidth:2,borderRadius:6}] },
+    options:{ responsive:true, plugins:{ legend:{display:false}, tooltip:TOOLTIP_OPTS },
+      scales:{ x:{grid:{display:false},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11}}},
+        y:{grid:{color:"rgba(0,0,0,0.04)"},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11}}} } }
+  });
+
+  var regionChart = new Chart(document.getElementById("regionChart"), {
+    type:"doughnut",
+    data:{ labels:["BC","Ontario","Quebec","Alberta","Atlantic"],
+      datasets:[{data:[],backgroundColor:["#0057ff","#00c897","#a259ff","#ffac00","#ff4d6a"],borderColor:"#fff",borderWidth:3,hoverOffset:6}] },
+    options:{ responsive:true, cutout:"60%", plugins:{
+      legend:{position:"bottom",labels:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11},padding:12,boxWidth:10,boxHeight:10}},
+      tooltip:{...TOOLTIP_OPTS, callbacks:{label:function(c){return "  "+c.parsed+"%";}}} } }
+  });
+
+  // ── Per-tab KPI data for each time range ──────────────────────────────────
+  var tabData = {
+    "1w": {
+      reports:  {generated:4,   genSub:"This week",        shared:8, exports:3,   expSub:"This week"},
+      shipments:{completed:82,  compSub:"This week",        transit:47, scheduled:12, excepts:2,   excSub:"This week"},
+      fleet:    {active:29, util:"76% utilisation", km:"18k",  kmSub:"&#8593; This week",  maint:2,  maintSub:"This week"},
+      customers:{total:284, totalSub:"&#8593; +2 this week",  sat:"4.7/5", satSub:"&#8593; Stable",    ret:"91.4%", retSub:"Stable",       ltv:"$18,400", ltvSub:"Stable"},
+      integ:    {calls:"2,140",  callsSub:"This week",  failed:1, failSub:"This week"}
+    },
+    "1m": {
+      reports:  {generated:14,  genSub:"This month",       shared:8, exports:12,  expSub:"This month"},
+      shipments:{completed:340, compSub:"This month",       transit:47, scheduled:23, excepts:4,   excSub:"This month"},
+      fleet:    {active:29, util:"76% utilisation", km:"74k",  kmSub:"&#8593; This month", maint:6,  maintSub:"This month"},
+      customers:{total:284, totalSub:"&#8593; +14 this month", sat:"4.7/5", satSub:"&#8593; +0.2 pts",  ret:"91.4%", retSub:"&#8593; +0.8%",      ltv:"$18,400", ltvSub:"&#8593; +$400"},
+      integ:    {calls:"48,200", callsSub:"This month", failed:8, failSub:"This month"}
+    },
+    "6m": {
+      reports:  {generated:68,  genSub:"Last 6 months",    shared:8, exports:24,  expSub:"Last 6 months"},
+      shipments:{completed:2460,compSub:"Last 6 months",    transit:47, scheduled:23, excepts:18,  excSub:"Last 6 months"},
+      fleet:    {active:29, util:"76% utilisation", km:"412k", kmSub:"&#8593; Last 6 months", maint:14, maintSub:"Last 6 months"},
+      customers:{total:284, totalSub:"&#8593; +52 in 6 months", sat:"4.6/5", satSub:"&#8593; +0.3 pts",  ret:"90.8%", retSub:"&#8593; +1.4%",      ltv:"$18,400", ltvSub:"&#8593; +$800"},
+      integ:    {calls:"284k",  callsSub:"Last 6 months",  failed:31, failSub:"Last 6 months"}
+    },
+    "1y": {
+      reports:  {generated:142, genSub:"&#8593; This year",    shared:8, exports:34,  expSub:"PDF &amp; CSV"},
+      shipments:{completed:4820,compSub:"&#8593; This year",    transit:47, scheduled:23, excepts:42,  excSub:"This year"},
+      fleet:    {active:29, util:"76% utilisation", km:"842k", kmSub:"&#8593; This year",     maint:24, maintSub:"This year"},
+      customers:{total:284, totalSub:"&#8593; +14 this month", sat:"4.7/5", satSub:"&#8593; +0.2 pts",  ret:"91.4%", retSub:"&#8593; +2.1%",      ltv:"$18,400", ltvSub:"&#8593; +$1,200"},
+      integ:    {calls:"12,480", callsSub:"Today",         failed:3, failSub:"Last 24 hours"}
+    },
+    "all": {
+      reports:  {generated:614, genSub:"All time",           shared:8, exports:210, expSub:"All time"},
+      shipments:{completed:18400,compSub:"All time",          transit:47, scheduled:23, excepts:184, excSub:"All time"},
+      fleet:    {active:29, util:"76% utilisation", km:"3.2M", kmSub:"All time",          maint:118, maintSub:"All time"},
+      customers:{total:284, totalSub:"All time",              sat:"4.5/5", satSub:"All time avg",    ret:"88.2%", retSub:"All time avg",   ltv:"$18,400", ltvSub:"All time avg"},
+      integ:    {calls:"4.8M",  callsSub:"All time",      failed:142, failSub:"All time"}
+    }
+  };
+
+  function setEl(id, val) { var el = document.getElementById(id); if (el) el.innerHTML = String(val); }
+
+  function applyFilter(range) {
+    activeRange = range;
+    var d = filterData[range];
+    var t = tabData[range];
+
+    // ── Charts ──────────────────────────────────────────────────────────────
+    lineChart.data.labels = d.lineLabels;
+    lineChart.data.datasets[0].data = d.lineValues;
+    lineChart.update();
+    doughnutChart.data.datasets[0].data = d.donut;
+    doughnutChart.update();
+    barChart.data.labels = d.barLabels;
+    barChart.data.datasets[0].data = d.barValues;
+    barChart.update();
+    regionChart.data.datasets[0].data = d.region;
+    regionChart.update();
+
+    // ── On-time bars ────────────────────────────────────────────────────────
+    ["freight","express","courier","bulk","cold"].forEach(function(key) {
+      var val = d.ontime[key];
+      var color = val >= 97 ? "var(--green)" : val >= 92 ? "var(--accent)" : "var(--warn)";
+      setEl("ot-"+key, val+"%");
+      var bar = document.getElementById("ot-"+key+"-bar");
+      if (bar) { bar.style.width = val+"%"; bar.style.background = color; }
+    });
+
+    // ── Chart badges ────────────────────────────────────────────────────────
+    setEl("line-badge", d.badgeLine); setEl("donut-badge", d.badgeDonut);
+    setEl("bar-badge",  d.badgeBar);  setEl("region-badge", d.badgeRegion);
+    setEl("ontime-badge", d.badgeOntime);
+
+    // ── Reports KPIs ────────────────────────────────────────────────────────
+    setEl("r-generated",  t.reports.generated);
+    setEl("r-gen-sub",    t.reports.genSub);
+    setEl("r-shared",     t.reports.shared);
+    setEl("r-exports",    t.reports.exports);
+    setEl("r-exports-sub",t.reports.expSub);
+
+    // ── Shipments KPIs ──────────────────────────────────────────────────────
+    setEl("sh-completed",     Number(t.shipments.completed).toLocaleString());
+    setEl("sh-completed-sub", t.shipments.compSub);
+    setEl("sh-transit",       t.shipments.transit);
+    setEl("sh-scheduled",     t.shipments.scheduled);
+    setEl("sh-exceptions",    t.shipments.excepts);
+    setEl("sh-exceptions-sub",t.shipments.excSub);
+
+    // ── Fleet KPIs ──────────────────────────────────────────────────────────
+    setEl("fl-active",   t.fleet.active);
+    setEl("fl-util",     t.fleet.util);
+    setEl("fl-km",       t.fleet.km);
+    setEl("fl-km-sub",   t.fleet.kmSub);
+    setEl("fl-maint",    t.fleet.maint);
+    setEl("fl-maint-sub",t.fleet.maintSub);
+
+    // ── Customers KPIs ──────────────────────────────────────────────────────
+    setEl("cx-total",    t.customers.total);
+    setEl("cx-total-sub",t.customers.totalSub);
+    setEl("cx-sat",      t.customers.sat);
+    setEl("cx-sat-sub",  t.customers.satSub);
+    setEl("cx-ret",      t.customers.ret);
+    setEl("cx-ret-sub",  t.customers.retSub);
+    setEl("cx-ltv",      t.customers.ltv);
+    setEl("cx-ltv-sub",  t.customers.ltvSub);
+
+    // ── Integrations KPIs ───────────────────────────────────────────────────
+    setEl("int-calls",     t.integ.calls);
+    setEl("int-calls-sub", t.integ.callsSub);
+    setEl("int-failed",    t.integ.failed);
+    setEl("int-failed-sub",t.integ.failSub);
+
+    // ── Sync ALL pill groups ─────────────────────────────────────────────────
+    document.querySelectorAll(".time-filter-pills .pill").forEach(function(p) {
+      p.classList.toggle("active", p.dataset.range === range);
+    });
+  }
+
+  // One listener for every pill group across all tabs
+  document.querySelectorAll(".time-filter-pills .pill").forEach(function(pill) {
+    pill.addEventListener("click", function() { applyFilter(this.dataset.range); });
+  });
+
+  // Initial render
+  applyFilter("1y");
+
+  // SUBTOTAL
+  function updateSubtotal() {
+    var qty = parseInt(document.getElementById("prod-qty").value) || 1;
+    var price = parseFloat(document.getElementById("prod-price").value) || 0;
+    document.getElementById("subtotal-hint").textContent = "$" + (qty * price).toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  // RENDER ENTRIES
+  function renderEntries() {
+    var list = document.getElementById("entries-list");
+    document.getElementById("entry-count").textContent = entries.length + " item" + (entries.length !== 1 ? "s" : "");
+    if (!entries.length) {
+      list.innerHTML = "<div class='empty-state'>No ongoing shipments.<br>Add one using the form on the left.</div>";
+      document.getElementById("portfolio-total").textContent = "$0.00";
+      return;
+    }
+    var total = entries.reduce(function(s,e){ return s + e.price * e.qty; }, 0);
+    document.getElementById("portfolio-total").textContent = "$" + total.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2});
+    list.innerHTML = entries.map(function(e) {
+      return "<div style='display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;gap:8px'>" +
+        "<div style='flex:1;min-width:0'>" +
+          "<div style='font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>" + e.name + "</div>" +
+          "<div style='font-size:11px;color:var(--muted)'>" + e.cat + " &middot; $" + e.price.toLocaleString(undefined,{minimumFractionDigits:2}) + " &times; " + e.qty + "</div>" +
+        "</div>" +
+        "<div style='display:flex;align-items:center;gap:6px;flex-shrink:0'>" +
+          "<span style='font-family:JetBrains Mono,monospace;font-weight:700;font-size:13px;color:var(--accent)'>$" + (e.price * e.qty).toLocaleString(undefined,{minimumFractionDigits:2}) + "</span>" +
+          "<button class='btn-complete' data-id='" + e.id + "'>✓ Complete</button>" +
+          "<button class='btn-remove' data-id='" + e.id + "'>Remove</button>" +
+        "</div></div>";
+    }).join("");
+  }
+
+  // ADD ENTRY
+  function addEntry() {
+    var nEl = document.getElementById("prod-name");
+    var pEl = document.getElementById("prod-price");
+    var qEl = document.getElementById("prod-qty");
+    var name = nEl.value.trim();
+    var price = parseFloat(pEl.value);
+    var cat = document.getElementById("prod-category").value;
+    var qty = Math.max(1, parseInt(qEl.value) || 1);
+
+    nEl.style.borderColor = pEl.style.borderColor = qEl.style.borderColor = "var(--border)";
+
+    if (!name) { nEl.style.borderColor = "var(--accent3)"; window.showToast("Shipment description cannot be empty.", "error"); nEl.focus(); return; }
+    if (isNaN(price) || price <= 0) { pEl.style.borderColor = "var(--accent3)"; window.showToast("Unit price must be a positive number greater than zero.", "error"); pEl.focus(); return; }
+    if (qty < 1) { qEl.style.borderColor = "var(--accent3)"; window.showToast("Quantity must be a positive whole number of at least 1.", "error"); qEl.focus(); return; }
+
+    entries.push({ id: Date.now(), name: name, price: price, qty: qty, cat: cat });
+    nEl.value = ""; pEl.value = ""; qEl.value = 1;
+    updateSubtotal();
+    renderEntries();
+    window.showToast("Shipment added to ongoing list.", "success");
+    nEl.focus();
+  }
+
+  // MARK COMPLETE
+  function markComplete(id) {
+    var e = entries.find(function(x){ return x.id === id; });
+    if (!e) return;
+    entries = entries.filter(function(x){ return x.id !== id; });
+    renderEntries();
+    var today = new Date().toISOString().split("T")[0];
+    if (e.qty <= 5) {
+      for (var i = 0; i < e.qty; i++) {
+        transactions.unshift({
+          id: "TXN-" + String(Math.floor(Math.random() * 90000) + 10000),
+          customer: "ABC Logistics",
+          product: e.qty > 1 ? e.name + " (" + (i+1) + "/" + e.qty + ")" : e.name,
+          category: e.cat, amount: e.price, date: today, status: "completed"
+        });
+      }
+    } else {
+      transactions.unshift({
+        id: "TXN-" + String(Math.floor(Math.random() * 90000) + 10000),
+        customer: "ABC Logistics", product: e.name + " x" + e.qty,
+        category: e.cat, amount: e.price * e.qty, date: today, status: "completed"
+      });
+    }
+    renderTable();
+    updateKPIs();
+    window.showToast("Shipment marked as completed.", "success");
+  }
+
+  // REMOVE ENTRY
+  function removeEntry(id) {
+    entries = entries.filter(function(e){ return e.id !== id; });
+    renderEntries();
+    window.showToast("Shipment removed from ongoing list.");
+  }
+
+  // ── SEED DATA FOR ALL TABS ───────────────────────────────────────────────
+
+  var REPORTS_SEED = [
+    {name:"Monthly Revenue Summary", type:"completed", typeLabel:"Financial",  period:"Feb 2026",  generated:"Mar 1, 2026",  size:"248 KB", seed:true},
+    {name:"Shipment Performance Q1",  type:"active",    typeLabel:"Operations", period:"Q1 2026",   generated:"Mar 1, 2026",  size:"512 KB", seed:true},
+    {name:"Fleet Utilisation Report", type:"active",    typeLabel:"Operations", period:"Feb 2026",  generated:"Feb 28, 2026", size:"184 KB", seed:true},
+    {name:"Customer Satisfaction",    type:"completed", typeLabel:"CX",         period:"Feb 2026",  generated:"Feb 28, 2026", size:"96 KB",  seed:true},
+    {name:"Incident & Damage Log",    type:"failed",    typeLabel:"Risk",       period:"Feb 2026",  generated:"Feb 25, 2026", size:"120 KB", seed:true},
+    {name:"YTD Revenue vs Target",    type:"completed", typeLabel:"Financial",  period:"YTD 2026",  generated:"Feb 20, 2026", size:"310 KB", seed:true},
+    {name:"Cold Chain Compliance",    type:"active",    typeLabel:"Compliance", period:"Jan 2026",  generated:"Feb 1, 2026",  size:"204 KB", seed:true}
+  ];
+
+  var SHIPMENTS_SEED = [
+    {id:"SHP-44821", origin:"Vancouver, BC",  dest:"Toronto, ON",    type:"Freight",    weight:"2,400 kg", eta:"Mar 7, 2026",  status:"pending",  statusLabel:"In Transit", seed:true},
+    {id:"SHP-44820", origin:"Calgary, AB",    dest:"Montreal, QC",   type:"Express",    weight:"180 kg",   eta:"Mar 6, 2026",  status:"pending",  statusLabel:"In Transit", seed:true},
+    {id:"SHP-44819", origin:"Toronto, ON",    dest:"Seattle, WA",    type:"Courier",    weight:"42 kg",    eta:"Mar 6, 2026",  status:"failed",   statusLabel:"Exception",  seed:true},
+    {id:"SHP-44818", origin:"Montreal, QC",   dest:"New York, NY",   type:"Cold Chain", weight:"650 kg",   eta:"Mar 8, 2026",  status:"pending",  statusLabel:"In Transit", seed:true},
+    {id:"SHP-44817", origin:"Edmonton, AB",   dest:"Winnipeg, MB",   type:"Bulk Cargo", weight:"8,200 kg", eta:"Mar 9, 2026",  status:"active",   statusLabel:"Scheduled",  seed:true},
+    {id:"SHP-44816", origin:"Ottawa, ON",     dest:"Halifax, NS",    type:"Freight",    weight:"1,100 kg", eta:"Mar 7, 2026",  status:"pending",  statusLabel:"In Transit", seed:true},
+    {id:"SHP-44815", origin:"Vancouver, BC",  dest:"Calgary, AB",    type:"Express",    weight:"90 kg",    eta:"Mar 6, 2026",  status:"pending",  statusLabel:"In Transit", seed:true}
+  ];
+
+  var FLEET_SEED = [
+    {id:"VEH-001", type:"Semi Truck",  model:"Volvo FH16",           driver:"James Okafor", service:"Jan 12, 2026", mileage:"142,300 km", status:"active",      statusLabel:"Active",      seed:true},
+    {id:"VEH-002", type:"Refrigerated",model:"Kenworth T680",        driver:"Sara Mendes",  service:"Feb 4, 2026",  mileage:"98,740 km",  status:"active",      statusLabel:"Active",      seed:true},
+    {id:"VEH-003", type:"Box Truck",   model:"Isuzu NPR",            driver:"Leo Tremblay", service:"Dec 20, 2025", mileage:"67,210 km",  status:"maintenance", statusLabel:"Maintenance", seed:true},
+    {id:"VEH-004", type:"Flatbed",     model:"Peterbilt 579",        driver:"Amara Singh",  service:"Feb 18, 2026", mileage:"210,580 km", status:"active",      statusLabel:"Active",      seed:true},
+    {id:"VEH-005", type:"Van",         model:"Mercedes Sprinter",    driver:"Wei Chen",     service:"Feb 22, 2026", mileage:"44,900 km",  status:"active",      statusLabel:"Active",      seed:true},
+    {id:"VEH-006", type:"Semi Truck",  model:"Freightliner Cascadia",driver:"—",            service:"Mar 1, 2026",  mileage:"178,400 km", status:"inactive",    statusLabel:"Inactive",    seed:true},
+    {id:"VEH-007", type:"Box Truck",   model:"Ford F-650",           driver:"Nadia Kovacs", service:"Jan 28, 2026", mileage:"55,120 km",  status:"active",      statusLabel:"Active",      seed:true}
+  ];
+
+  var CUSTOMERS_SEED = [
+    {name:"Acme Corp",     industry:"Manufacturing",  contact:"ops@acme.com",        shipments:142, spend:"$284,000", rating:"4.9", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Globex LLC",    industry:"Technology",     contact:"ship@globex.com",      shipments:98,  spend:"$196,400", rating:"4.7", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Initech",       industry:"Retail",         contact:"orders@initech.com",   shipments:74,  spend:"$148,200", rating:"4.5", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Umbrella Inc",  industry:"Pharma",         contact:"logistics@umbrella.com",shipments:61, spend:"$122,000", rating:"4.8", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Dunder Mifflin",industry:"Office Supplies",contact:"michael@dundermifflin.com",shipments:33,spend:"$44,700",rating:"3.9",status:"pending",   statusLabel:"At Risk",  seed:true},
+    {name:"Pied Piper",    industry:"Technology",     contact:"ops@piedpiper.com",    shipments:52,  spend:"$98,900",  rating:"4.6", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Bluth Company", industry:"Real Estate",    contact:"gob@bluth.com",        shipments:18,  spend:"$36,200",  rating:"4.2", status:"failed",    statusLabel:"Inactive", seed:true}
+  ];
+
+  // Live arrays (start as copies of seed)
+  var reportsData   = REPORTS_SEED.slice();
+  var shipmentsData = SHIPMENTS_SEED.slice();
+  var fleetData     = FLEET_SEED.slice();
+  var customersData = CUSTOMERS_SEED.slice();
+
+  // ── RENDER FUNCTIONS ─────────────────────────────────────────────────────
+
+  function renderReports() {
+    var tbody = document.getElementById("reports-tbody");
+    var badge = document.getElementById("reports-badge");
+    if (badge) badge.textContent = reportsData.length + " report" + (reportsData.length !== 1 ? "s" : "");
+    if (!tbody) return;
+    if (!reportsData.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No reports. Generate one below.</td></tr>'; return; }
+    tbody.innerHTML = reportsData.map(function(r) {
+      return '<tr><td>' + r.name + '</td><td><span class="status ' + r.type + '">' + r.typeLabel + '</span></td><td>' + r.period + '</td><td>' + r.generated + '</td><td>' + r.size + '</td><td><button class="btn-sm" onclick="window.showToast(\u0027Report download started.\u0027)">Download</button></td></tr>';
+    }).join("");
+  }
+
+  function renderShipments() {
+    var tbody = document.getElementById("shipments-tbody");
+    var badge = document.getElementById("shipments-badge");
+    if (badge) badge.textContent = shipmentsData.length + " active";
+    if (!tbody) return;
+    if (!shipmentsData.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No active shipments.</td></tr>'; return; }
+    tbody.innerHTML = shipmentsData.map(function(s) {
+      return '<tr><td class="tx-id">' + s.id + '</td><td>' + s.origin + '</td><td>' + s.dest + '</td><td>' + s.type + '</td><td>' + s.weight + '</td><td>' + s.eta + '</td><td><span class="status ' + s.status + '">' + s.statusLabel + '</span></td></tr>';
+    }).join("");
+  }
+
+  function renderFleet() {
+    var tbody = document.getElementById("fleet-tbody");
+    var badge = document.getElementById("fleet-badge");
+    if (badge) badge.textContent = fleetData.length + " vehicle" + (fleetData.length !== 1 ? "s" : "");
+    if (!tbody) return;
+    if (!fleetData.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No vehicles registered.</td></tr>'; return; }
+    tbody.innerHTML = fleetData.map(function(v) {
+      return '<tr><td class="tx-id">' + v.id + '</td><td>' + v.type + '</td><td>' + v.model + '</td><td>' + v.driver + '</td><td>' + v.service + '</td><td class="price-cell">' + v.mileage + '</td><td><span class="status ' + v.status + '">' + v.statusLabel + '</span></td></tr>';
+    }).join("");
+  }
+
+  function renderCustomers() {
+    var tbody = document.getElementById("customers-tbody");
+    var badge = document.getElementById("customers-badge");
+    if (badge) badge.textContent = customersData.length + " account" + (customersData.length !== 1 ? "s" : "");
+    if (!tbody) return;
+    if (!customersData.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No customers on record.</td></tr>'; return; }
+    tbody.innerHTML = customersData.map(function(c) {
+      return '<tr><td style="font-weight:700">' + c.name + '</td><td>' + c.industry + '</td><td style="color:var(--accent);font-size:12px">' + c.contact + '</td><td>' + c.shipments + '</td><td class="price-cell">' + c.spend + '</td><td>&#11088; ' + c.rating + '</td><td><span class="status ' + c.status + '">' + c.statusLabel + '</span></td></tr>';
+    }).join("");
+  }
+
+  // Initial renders
+  renderReports();
+  renderShipments();
+  renderFleet();
+  renderCustomers();
+
+  // Wire up "Book New Shipment" form to add to shipmentsData
+  var bookShipBtn = document.querySelector('#page-shipments .btn-primary');
+  if (bookShipBtn) {
+    bookShipBtn.addEventListener("click", function() {
+      var inputs = document.querySelectorAll('#page-shipments .form-input');
+      var origin = inputs[0] ? inputs[0].value.trim() : "";
+      var dest   = inputs[1] ? inputs[1].value.trim() : "";
+      if (!origin || !dest) { window.showToast("Please enter origin and destination.", "error"); return; }
+      var stype  = document.querySelector('#page-shipments .form-select') ? document.querySelector('#page-shipments .form-select').value : "Freight";
+      var newId  = "SHP-" + String(Math.floor(Math.random()*90000)+10000);
+      shipmentsData.unshift({id:newId, origin:origin, dest:dest, type:stype, weight:"—", eta:"TBD", status:"active", statusLabel:"Scheduled", seed:false});
+      renderShipments();
+      inputs[0].value = ""; inputs[1].value = "";
+      window.showToast("Shipment " + newId + " booked.", "success");
+    });
+  }
+
+  // Wire up "Register Vehicle" form
+  var regVehBtn = document.querySelector('#page-fleet .input-card:first-child .btn-primary');
+  if (regVehBtn) {
+    regVehBtn.addEventListener("click", function() {
+      var inputs = document.querySelectorAll('#page-fleet .input-card:first-child .form-input');
+      var model  = inputs[0] ? inputs[0].value.trim() : "";
+      var driver = inputs[1] ? inputs[1].value.trim() : "";
+      if (!model) { window.showToast("Please enter a make & model.", "error"); return; }
+      var vtype  = document.querySelector('#page-fleet .input-card:first-child .form-select') ? document.querySelector('#page-fleet .input-card:first-child .form-select').value : "Semi Truck";
+      var newId  = "VEH-" + String(Math.floor(Math.random()*900)+100);
+      var today  = new Date().toLocaleDateString("en-CA",{month:"short",day:"numeric",year:"numeric"});
+      fleetData.push({id:newId, type:vtype, model:model, driver:driver||"—", service:today, mileage:"0 km", status:"active", statusLabel:"Active", seed:false});
+      renderFleet();
+      inputs.forEach(function(i){ i.value = ""; });
+      window.showToast("Vehicle " + newId + " registered.", "success");
+    });
+  }
+
+  // Wire up "Add Customer" form
+  var addCxBtn = document.querySelector('#page-customers .input-card:first-child .btn-primary');
+  if (addCxBtn) {
+    addCxBtn.addEventListener("click", function() {
+      var inputs  = document.querySelectorAll('#page-customers .input-card:first-child .form-input');
+      var name    = inputs[0] ? inputs[0].value.trim() : "";
+      var contact = inputs[1] ? inputs[1].value.trim() : "";
+      if (!name) { window.showToast("Please enter a company name.", "error"); return; }
+      var industry = document.querySelector('#page-customers .input-card:first-child .form-select') ? document.querySelector('#page-customers .input-card:first-child .form-select').value : "Other";
+      customersData.push({name:name, industry:industry, contact:contact||"—", shipments:0, spend:"$0", rating:"—", status:"active", statusLabel:"Active", seed:false});
+      renderCustomers();
+      inputs.forEach(function(i){ i.value = ""; });
+      window.showToast("Customer account created.", "success");
+    });
+  }
+
+  // Wire up "Generate Report" form
+  var genRptBtn = document.querySelector('#page-reports .btn-primary[onclick]');
+  if (genRptBtn) {
+    genRptBtn.removeAttribute("onclick");
+    genRptBtn.addEventListener("click", function() {
+      var selects = document.querySelectorAll('#page-reports .card:last-child .form-select');
+      var rtype   = selects[0] ? selects[0].value : "Report";
+      var period  = selects[1] ? selects[1].value : "This Month";
+      var fmt     = selects[2] ? selects[2].value : "PDF";
+      var today   = new Date().toLocaleDateString("en-CA",{month:"short",day:"numeric",year:"numeric"});
+      var sizes   = {"PDF":"120 KB","CSV":"48 KB","Excel":"96 KB"};
+      reportsData.unshift({name:rtype, type:"active", typeLabel:"Generated", period:period, generated:today, size:sizes[fmt]||"80 KB", seed:false});
+      renderReports();
+      window.showToast("Report generated and added to Saved Reports.", "success");
+    });
+  }
+
+  // ── CLEAR DATA (scope-aware, ALL TABS) ───────────────────────────────────
+  function clearAllData(scope) {
+ resetAnalytics();
+    if (scope === "session") {
+      // Dashboard
+      var seedIds = SEED.map(function(t){ return t.id; });
+      transactions = transactions.filter(function(t){ return seedIds.indexOf(t.id) !== -1; });
+      entries = [];
+      // Other tabs — remove non-seed rows only
+      reportsData   = reportsData.filter(function(r){ return r.seed; });
+      shipmentsData = shipmentsData.filter(function(s){ return s.seed; });
+      fleetData     = fleetData.filter(function(v){ return v.seed; });
+      customersData = customersData.filter(function(c){ return c.seed; });
+    } else {
+      // Wipe everything
+      transactions  = [];
+      entries       = [];
+      reportsData   = [];
+      shipmentsData = [];
+      fleetData     = [];
+      customersData = [];
+    }
+    // Re-render all tabs
+    renderTable(); updateKPIs(); renderEntries();
+    renderReports(); renderShipments(); renderFleet(); renderCustomers();
+    // Reset dashboard form inputs
+    ["prod-name","prod-price","prod-qty"].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) { el.value = id === "prod-qty" ? 1 : ""; el.style.borderColor = "var(--border)"; }
+    });
+    updateSubtotal();
+    applyFilter("1y");
+    var msg = scope === "session"
+      ? "Session entries cleared across all tabs. Seed data retained."
+      : "All data cleared across all tabs.";
+    window.showToast(msg, "success");
+  }
+
+  // EVENT LISTENERS
+  document.getElementById("add-btn").addEventListener("click", addEntry);
+  document.getElementById("prod-price").addEventListener("input", updateSubtotal);
+  document.getElementById("prod-qty").addEventListener("input", updateSubtotal);
+  ["prod-name","prod-price","prod-qty"].forEach(function(eid) {
+    document.getElementById(eid).addEventListener("keydown", function(e){ if (e.key === "Enter") addEntry(); });
+  });
+  document.getElementById("entries-list").addEventListener("click", function(e) {
+    var cb = e.target.closest(".btn-complete");
+    var rb = e.target.closest(".btn-remove");
+    if (cb) markComplete(parseInt(cb.dataset.id));
+    else if (rb) removeEntry(parseInt(rb.dataset.id));
+  });
+  document.getElementById("clear-ongoing-btn").addEventListener("click", function() {
+    if (!entries.length) { window.showToast("No ongoing shipments to clear."); return; }
+    entries = []; renderEntries(); window.showToast("All ongoing shipments cleared.");
+  });
+  document.getElementById("clear-tx-btn").addEventListener("click", function() {
+    if (!transactions.length) { window.showToast("No transactions to clear."); return; }
+    transactions = []; renderTable(); updateKPIs(); window.showToast("All transactions cleared.");
+  });
+
+  // Clear Data — inline confirmation with scope dropdown
+  var clearAllBtn      = document.getElementById("clear-all-data-btn");
+  var clearConfirmBox  = document.getElementById("clear-confirm");
+  var clearConfirmLbl  = document.getElementById("clear-confirm-label");
+  var clearYesBtn      = document.getElementById("clear-confirm-yes");
+  var clearNoBtn       = document.getElementById("clear-confirm-no");
+  var clearScopeSelect = document.getElementById("clear-scope");
+
+  var scopeLabels = {
+    session: "This will remove new session entries only. Historical data stays.",
+    all:     "This will wipe ALL data including historical records."
+  };
+
+  clearAllBtn.addEventListener("click", function() {
+    var scope = clearScopeSelect.value;
+    clearConfirmLbl.textContent = "\u26a0\ufe0f " + scopeLabels[scope];
+    clearConfirmBox.style.display = "flex";
+    clearAllBtn.style.display = "none";
+    clearScopeSelect.style.display = "none";
+  });
+  clearNoBtn.addEventListener("click", function() {
+    clearConfirmBox.style.display = "none";
+    clearAllBtn.style.display = "inline-block";
+    clearScopeSelect.style.display = "block";
+  });
+  clearYesBtn.addEventListener("click", function() {
+    var scope = clearScopeSelect.value;
+    clearConfirmBox.style.display = "none";
+    clearAllBtn.style.display = "inline-block";
+    clearScopeSelect.style.display = "block";
+    clearAllData(scope);
+  });
+
+});
+</script>
+
+<script>
+function resetAnalytics(){
+ try{
+  if(window.lineChart){
+    lineChart.data.labels=[];
+    lineChart.data.datasets.forEach(d=>d.data=[]);
+    lineChart.update();
+  }
+  if(window.barChart){
+    barChart.data.labels=[];
+    barChart.data.datasets.forEach(d=>d.data=[]);
+    barChart.update();
+  }
+  if(window.doughnutChart){
+    doughnutChart.data.datasets.forEach(d=>d.data=[]);
+    doughnutChart.update();
+  }
+  ["freight","express","courier","bulk","cold"].forEach(k=>{
+    let t=document.getElementById("ot-"+k);
+    let b=document.getElementById("ot-"+k+"-bar");
+    if(t) t.textContent="0%";
+    if(b) b.style.width="0%";
+  });
+ }catch(e){console.log(e);}
+}
+
+// Hook into existing clearAllData safely
+if(window.clearAllData){
+ const originalClearAll = window.clearAllData;
+ window.clearAllData = function(){
+   originalClearAll.apply(this,arguments);
+   resetAnalytics();
+ };
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>About Me</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f1523;
+color:white;
+margin:0;
+}
+
+.top-nav{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:16px 24px;
+background:#111827;
+}
+
+.top-nav a{
+color:white;
+text-decoration:none;
+margin-left:20px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+padding:40px;
+}
+
+.card{
+background:#1f2937;
+padding:30px;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+.edit-btn{
+background:#2563eb;
+border:none;
+color:white;
+padding:10px 16px;
+border-radius:6px;
+cursor:pointer;
+margin-bottom:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header class="top-nav">
+<div>ABC Logistics</div>
+<nav>
+<a href="ABC_Logistics_dashboard.html">Dashboard</a>
+<a href="about_editable.html">About Me</a>
+</nav>
+</header>
+
+<div class="container">
+
+<button class="edit-btn" onclick="toggleEdit()">Edit Page</button>
+
+<div class="card" contenteditable="false">
+<h1>About Me</h1>
+<p>Click edit to start writing about yourself.</p>
+</div>
+
+<div class="card" contenteditable="false">
+<h2>Background</h2>
+<p>Add your personal background, education, or experience here.</p>
+</div>
+
+<div class="card" contenteditable="false">
+<h2>Skills</h2>
+<ul>
+<li>Logistics</li>
+<li>Supply Chain Analytics</li>
+<li>Dashboard Development</li>
+</ul>
+</div>
+
+<div class="card" contenteditable="false">
+<h2>Projects</h2>
+<p>Describe the ABC Logistics dashboard and other projects you want to showcase.</p>
+</div>
+
+</div>
+
+<script>
+let editing=false;
+
+function toggleEdit(){
+ editing=!editing;
+ document.querySelectorAll(".card").forEach(c=>{
+   c.contentEditable = editing;
+ });
+}
+</script>
+
+</body>
+</html>
