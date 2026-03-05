@@ -238,7 +238,7 @@ body{padding-top:60px;}
   <div class="nav-item" data-page="analytics"><span class="icon">&#9672;</span> Analytics</div>
   <div class="nav-item" data-page="reports"><span class="icon">&#128196;</span> Reports</div>
   <div class="sidebar-section">Logistics</div>
-  <div class="nav-item" data-page="shipments"><span class="icon">&#128666;</span> Shipments</div>
+  <div class="nav-item" data-page="inventory"><span class="icon">&#128666;</span> Inventory</div>
   <div class="nav-item" data-page="fleet"><span class="icon">&#128652;</span> Fleet</div>
   <div class="nav-item" data-page="customers"><span class="icon">&#128101;</span> Customers</div>
   <div class="sidebar-section">System</div>
@@ -270,7 +270,7 @@ body{padding-top:60px;}
   <div class="page active" id="page-dashboard">
     <div class="kpi-grid">
       <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,87,255,0.1)">&#128181;</div><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="kpi-revenue">$0</div><div class="kpi-change up">&#8593; +8.2% vs last month</div></div>
-      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#128666;</div><div class="kpi-label">Total Shipments</div><div class="kpi-value" id="kpi-orders">0</div><div class="kpi-change up">&#8593; +12.4% vs last month</div></div>
+      <div class="kpi-card"><div class="kpi-icon" style="background:rgba(0,200,151,0.1)">&#128666;</div><div class="kpi-label">Total Inventory</div><div class="kpi-value" id="kpi-orders">0</div><div class="kpi-change up">&#8593; +12.4% vs last month</div></div>
       <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,77,106,0.1)">&#128200;</div><div class="kpi-label">Avg Shipment Value</div><div class="kpi-value" id="kpi-avg">$0.00</div><div class="kpi-change down">&#8595; &minus;2.1% vs last month</div></div>
       <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,172,0,0.1)">&#9989;</div><div class="kpi-label">On-Time Rate</div><div class="kpi-value">94.7%</div><div class="kpi-change up">&#8593; +1.3% vs last month</div></div>
     </div>
@@ -286,7 +286,7 @@ body{padding-top:60px;}
     </div>
     <div class="charts-row">
       <div class="card"><div class="card-header"><div class="card-title">Revenue Over Time</div><div class="card-badge" id="line-badge">Last 12 months</div></div><canvas id="lineChart" height="110"></canvas></div>
-      <div class="card"><div class="card-header"><div class="card-title">Shipments by Type</div><div style="display:flex;align-items:center;gap:8px"><button class="btn-sm" id="toggle-donut-chart">Bar View</button><div class="card-badge" id="donut-badge">This year</div></div></div><canvas id="doughnutChart" height="160"></canvas></div>
+      <div class="card"><div class="card-header"><div class="card-title">Inventory by Type</div><div style="display:flex;align-items:center;gap:8px"><button class="btn-sm" id="toggle-donut-chart">Bar View</button><div class="card-badge" id="donut-badge">This year</div></div></div><canvas id="doughnutChart" height="160"></canvas></div>
     </div>
     <div class="form-grid">
       <div class="input-card">
@@ -299,15 +299,15 @@ body{padding-top:60px;}
           </div>
         </div>
         <div class="field-group"><label class="section-label">Quantity / Units</label><input type="number" id="prod-qty" class="form-input" placeholder="1" min="1" max="9999" value="1"/><div class="subtotal-hint">Subtotal: <span id="subtotal-hint">$0.00</span></div></div>
-        <button class="btn-primary" id="add-btn">+ Add to Ongoing Shipments</button>
+        <button class="btn-primary" id="add-btn">+ Add to Ongoing Inventory</button>
         <div class="total-bar" style="margin-top:14px"><span>Session Total</span><span id="portfolio-total">$0.00</span></div>
       </div>
       <div class="input-card">
         <div class="card-header" style="margin-bottom:12px">
-          <div class="card-title">Ongoing Shipments</div>
+          <div class="card-title">Ongoing Inventory</div>
           <div style="display:flex;align-items:center;gap:8px"><div id="entry-count" class="card-badge">0 items</div><button class="btn-clear" id="clear-ongoing-btn">Clear All</button></div>
         </div>
-        <div id="entries-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;"><div class="empty-state">No ongoing shipments.<br>Add one using the form on the left.</div></div>
+        <div id="entries-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;"><div class="empty-state">No ongoing inventory.<br>Add one using the form on the left.</div></div>
       </div>
     </div>
     <div class="table-card">
@@ -404,10 +404,10 @@ body{padding-top:60px;}
   </div>
 
   <!-- ═══════════════ SHIPMENTS ═══════════════ -->
-  <div class="page" id="page-shipments">
+  <div class="page" id="page-inventory">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
-      <div style="font-size:13px;font-weight:700;color:var(--text)">Shipments</div>
-      <div class="time-filter-pills" id="shipments-pills">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Inventory</div>
+      <div class="time-filter-pills" id="inventory-pills">
         <button class="pill" data-range="1w">1 Week</button>
         <button class="pill" data-range="1m">1 Month</button>
         <button class="pill" data-range="6m">6 Months</button>
@@ -422,8 +422,8 @@ body{padding-top:60px;}
       <div class="kpi-card"><div class="kpi-icon" style="background:rgba(255,77,106,0.1)">&#9888;</div><div class="kpi-label">Exceptions</div><div class="kpi-value" id="sh-exceptions">5</div><div class="kpi-change down" id="sh-exceptions-sub">This year</div></div>
     </div>
     <div class="table-card">
-      <div class="card-header"><div class="card-title">Active Shipments</div><div class="card-badge" id="shipments-badge">7 active</div></div>
-      <table><thead><tr><th>Shipment ID</th><th>Origin</th><th>Destination</th><th>Type</th><th>Weight</th><th>ETA</th><th>Status</th></tr></thead><tbody id="shipments-tbody"></tbody></table>
+      <div class="card-header"><div class="card-title">Active Inventory</div><div class="card-badge" id="inventory-badge">7 active</div></div>
+      <table><thead><tr><th>Shipment ID</th><th>Origin</th><th>Destination</th><th>Type</th><th>Weight</th><th>ETA</th><th>Status</th></tr></thead><tbody id="inventory-tbody"></tbody></table>
     </div>
     <div class="form-grid">
       <div class="input-card">
@@ -518,7 +518,7 @@ body{padding-top:60px;}
     </div>
     <div class="table-card">
       <div class="card-header"><div class="card-title">Customer Directory</div><div class="card-badge" id="customers-badge">7 accounts</div></div>
-      <table><thead><tr><th>Customer</th><th>Industry</th><th>Contact</th><th>Shipments</th><th>Total Spend</th><th>Rating</th><th>Status</th></tr></thead><tbody id="customers-tbody"></tbody></table>
+      <table><thead><tr><th>Customer</th><th>Industry</th><th>Contact</th><th>Inventory</th><th>Total Spend</th><th>Rating</th><th>Status</th></tr></thead><tbody id="customers-tbody"></tbody></table>
     </div>
     <div class="form-grid">
       <div class="input-card">
@@ -670,14 +670,14 @@ document.addEventListener("DOMContentLoaded", function() {
   // NAV
   var pageTitles = {
     dashboard:"Dashboard", analytics:"Analytics", reports:"Reports",
-    shipments:"Shipments", fleet:"Fleet Management", customers:"Customers",
+    inventory:"Inventory", fleet:"Fleet Management", customers:"Customers",
     configuration:"Configuration", integrations:"Integrations"
   };
   var pageSubs = {
     dashboard:"ABC Logistics — Operations Overview",
     analytics:"ABC Logistics — Performance Analytics",
     reports:"ABC Logistics — Reports & Exports",
-    shipments:"ABC Logistics — Shipment Management",
+    inventory:"ABC Logistics — Shipment Management",
     fleet:"ABC Logistics — Fleet Registry",
     customers:"ABC Logistics — Customer Accounts",
     configuration:"ABC Logistics — System Configuration",
@@ -836,7 +836,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var body = document.getElementById("tx-table-body");
     document.getElementById("tx-count").textContent = transactions.length + " records";
     if (!transactions.length) {
-      body.innerHTML = "<tr><td colspan='7' style='padding:24px;text-align:center;color:var(--muted);font-size:13px'>No transactions. Add shipments and mark them complete.</td></tr>";
+      body.innerHTML = "<tr><td colspan='7' style='padding:24px;text-align:center;color:var(--muted);font-size:13px'>No transactions. Add inventory and mark them complete.</td></tr>";
       return;
     }
     body.innerHTML = transactions.map(function(tx) {
@@ -980,7 +980,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   var barChart = new Chart(document.getElementById("barChart"), {
     type:"bar",
-    data:{ labels:[], datasets:[{label:"Shipments",data:[],
+    data:{ labels:[], datasets:[{label:"Inventory",data:[],
       backgroundColor:"rgba(0,87,255,0.15)",borderColor:"#0057ff",borderWidth:2,borderRadius:6}] },
     options:{ responsive:true, plugins:{ legend:{display:false}, tooltip:TOOLTIP_OPTS },
       scales:{ x:{grid:{display:false},ticks:{color:"#8a92a6",font:{family:"Plus Jakarta Sans",size:11}}},
@@ -992,35 +992,35 @@ document.addEventListener("DOMContentLoaded", function() {
   var tabData = {
     "1w": {
       reports:  {generated:4,   genSub:"This week",        shared:8, exports:3,   expSub:"This week"},
-      shipments:{completed:82,  compSub:"This week",        transit:47, scheduled:12, excepts:2,   excSub:"This week"},
+      inventory:{completed:82,  compSub:"This week",        transit:47, scheduled:12, excepts:2,   excSub:"This week"},
       fleet:    {active:29, util:"76% utilisation", km:"18k",  kmSub:"&#8593; This week",  maint:2,  maintSub:"This week"},
       customers:{total:284, totalSub:"&#8593; +2 this week",  sat:"4.7/5", satSub:"&#8593; Stable",    ret:"91.4%", retSub:"Stable",       ltv:"$18,400", ltvSub:"Stable"},
       integ:    {calls:"2,140",  callsSub:"This week",  failed:1, failSub:"This week"}
     },
     "1m": {
       reports:  {generated:14,  genSub:"This month",       shared:8, exports:12,  expSub:"This month"},
-      shipments:{completed:340, compSub:"This month",       transit:47, scheduled:23, excepts:4,   excSub:"This month"},
+      inventory:{completed:340, compSub:"This month",       transit:47, scheduled:23, excepts:4,   excSub:"This month"},
       fleet:    {active:29, util:"76% utilisation", km:"74k",  kmSub:"&#8593; This month", maint:6,  maintSub:"This month"},
       customers:{total:284, totalSub:"&#8593; +14 this month", sat:"4.7/5", satSub:"&#8593; +0.2 pts",  ret:"91.4%", retSub:"&#8593; +0.8%",      ltv:"$18,400", ltvSub:"&#8593; +$400"},
       integ:    {calls:"48,200", callsSub:"This month", failed:8, failSub:"This month"}
     },
     "6m": {
       reports:  {generated:68,  genSub:"Last 6 months",    shared:8, exports:24,  expSub:"Last 6 months"},
-      shipments:{completed:2460,compSub:"Last 6 months",    transit:47, scheduled:23, excepts:18,  excSub:"Last 6 months"},
+      inventory:{completed:2460,compSub:"Last 6 months",    transit:47, scheduled:23, excepts:18,  excSub:"Last 6 months"},
       fleet:    {active:29, util:"76% utilisation", km:"412k", kmSub:"&#8593; Last 6 months", maint:14, maintSub:"Last 6 months"},
       customers:{total:284, totalSub:"&#8593; +52 in 6 months", sat:"4.6/5", satSub:"&#8593; +0.3 pts",  ret:"90.8%", retSub:"&#8593; +1.4%",      ltv:"$18,400", ltvSub:"&#8593; +$800"},
       integ:    {calls:"284k",  callsSub:"Last 6 months",  failed:31, failSub:"Last 6 months"}
     },
     "1y": {
       reports:  {generated:142, genSub:"&#8593; This year",    shared:8, exports:34,  expSub:"PDF &amp; CSV"},
-      shipments:{completed:4820,compSub:"&#8593; This year",    transit:47, scheduled:23, excepts:42,  excSub:"This year"},
+      inventory:{completed:4820,compSub:"&#8593; This year",    transit:47, scheduled:23, excepts:42,  excSub:"This year"},
       fleet:    {active:29, util:"76% utilisation", km:"842k", kmSub:"&#8593; This year",     maint:24, maintSub:"This year"},
       customers:{total:284, totalSub:"&#8593; +14 this month", sat:"4.7/5", satSub:"&#8593; +0.2 pts",  ret:"91.4%", retSub:"&#8593; +2.1%",      ltv:"$18,400", ltvSub:"&#8593; +$1,200"},
       integ:    {calls:"12,480", callsSub:"Today",         failed:3, failSub:"Last 24 hours"}
     },
     "all": {
       reports:  {generated:614, genSub:"All time",           shared:8, exports:210, expSub:"All time"},
-      shipments:{completed:18400,compSub:"All time",          transit:47, scheduled:23, excepts:184, excSub:"All time"},
+      inventory:{completed:18400,compSub:"All time",          transit:47, scheduled:23, excepts:184, excSub:"All time"},
       fleet:    {active:29, util:"76% utilisation", km:"3.2M", kmSub:"All time",          maint:118, maintSub:"All time"},
       customers:{total:284, totalSub:"All time",              sat:"4.5/5", satSub:"All time avg",    ret:"88.2%", retSub:"All time avg",   ltv:"$18,400", ltvSub:"All time avg"},
       integ:    {calls:"4.8M",  callsSub:"All time",      failed:142, failSub:"All time"}
@@ -1067,13 +1067,13 @@ document.addEventListener("DOMContentLoaded", function() {
     setEl("r-exports",    t.reports.exports);
     setEl("r-exports-sub",t.reports.expSub);
 
-    // ── Shipments KPIs ──────────────────────────────────────────────────────
-    setEl("sh-completed",     Number(t.shipments.completed).toLocaleString());
-    setEl("sh-completed-sub", t.shipments.compSub);
-    setEl("sh-transit",       t.shipments.transit);
-    setEl("sh-scheduled",     t.shipments.scheduled);
-    setEl("sh-exceptions",    t.shipments.excepts);
-    setEl("sh-exceptions-sub",t.shipments.excSub);
+    // ── Inventory KPIs ──────────────────────────────────────────────────────
+    setEl("sh-completed",     Number(t.inventory.completed).toLocaleString());
+    setEl("sh-completed-sub", t.inventory.compSub);
+    setEl("sh-transit",       t.inventory.transit);
+    setEl("sh-scheduled",     t.inventory.scheduled);
+    setEl("sh-exceptions",    t.inventory.excepts);
+    setEl("sh-exceptions-sub",t.inventory.excSub);
 
     // ── Fleet KPIs ──────────────────────────────────────────────────────────
     setEl("fl-active",   t.fleet.active);
@@ -1149,7 +1149,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var list = document.getElementById("entries-list");
     document.getElementById("entry-count").textContent = entries.length + " item" + (entries.length !== 1 ? "s" : "");
     if (!entries.length) {
-      list.innerHTML = "<div class='empty-state'>No ongoing shipments.<br>Add one using the form on the left.</div>";
+      list.innerHTML = "<div class='empty-state'>No ongoing inventory.<br>Add one using the form on the left.</div>";
       document.getElementById("portfolio-total").textContent = "$0.00";
       return;
     }
@@ -1271,18 +1271,18 @@ document.addEventListener("DOMContentLoaded", function() {
   ];
 
   var CUSTOMERS_SEED = [
-    {name:"Acme Corp",     industry:"Manufacturing",  contact:"ops@acme.com",        shipments:142, spend:"$284,000", rating:"4.9", status:"completed", statusLabel:"Active",   seed:true},
-    {name:"Globex LLC",    industry:"Technology",     contact:"ship@globex.com",      shipments:98,  spend:"$196,400", rating:"4.7", status:"completed", statusLabel:"Active",   seed:true},
-    {name:"Initech",       industry:"Retail",         contact:"orders@initech.com",   shipments:74,  spend:"$148,200", rating:"4.5", status:"completed", statusLabel:"Active",   seed:true},
-    {name:"Umbrella Inc",  industry:"Pharma",         contact:"logistics@umbrella.com",shipments:61, spend:"$122,000", rating:"4.8", status:"completed", statusLabel:"Active",   seed:true},
-    {name:"Dunder Mifflin",industry:"Office Supplies",contact:"michael@dundermifflin.com",shipments:33,spend:"$44,700",rating:"3.9",status:"pending",   statusLabel:"At Risk",  seed:true},
-    {name:"Pied Piper",    industry:"Technology",     contact:"ops@piedpiper.com",    shipments:52,  spend:"$98,900",  rating:"4.6", status:"completed", statusLabel:"Active",   seed:true},
-    {name:"Bluth Company", industry:"Real Estate",    contact:"gob@bluth.com",        shipments:18,  spend:"$36,200",  rating:"4.2", status:"failed",    statusLabel:"Inactive", seed:true}
+    {name:"Acme Corp",     industry:"Manufacturing",  contact:"ops@acme.com",        inventory:142, spend:"$284,000", rating:"4.9", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Globex LLC",    industry:"Technology",     contact:"ship@globex.com",      inventory:98,  spend:"$196,400", rating:"4.7", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Initech",       industry:"Retail",         contact:"orders@initech.com",   inventory:74,  spend:"$148,200", rating:"4.5", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Umbrella Inc",  industry:"Pharma",         contact:"logistics@umbrella.com",inventory:61, spend:"$122,000", rating:"4.8", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Dunder Mifflin",industry:"Office Supplies",contact:"michael@dundermifflin.com",inventory:33,spend:"$44,700",rating:"3.9",status:"pending",   statusLabel:"At Risk",  seed:true},
+    {name:"Pied Piper",    industry:"Technology",     contact:"ops@piedpiper.com",    inventory:52,  spend:"$98,900",  rating:"4.6", status:"completed", statusLabel:"Active",   seed:true},
+    {name:"Bluth Company", industry:"Real Estate",    contact:"gob@bluth.com",        inventory:18,  spend:"$36,200",  rating:"4.2", status:"failed",    statusLabel:"Inactive", seed:true}
   ];
 
   // Live arrays (start as copies of seed)
   var reportsData   = REPORTS_SEED.slice();
-  var shipmentsData = SHIPMENTS_SEED.slice();
+  var inventoryData = SHIPMENTS_SEED.slice();
   var fleetData     = FLEET_SEED.slice();
   var customersData = CUSTOMERS_SEED.slice();
 
@@ -1299,13 +1299,13 @@ document.addEventListener("DOMContentLoaded", function() {
     }).join("");
   }
 
-  function renderShipments() {
-    var tbody = document.getElementById("shipments-tbody");
-    var badge = document.getElementById("shipments-badge");
-    if (badge) badge.textContent = shipmentsData.length + " active";
+  function renderInventory() {
+    var tbody = document.getElementById("inventory-tbody");
+    var badge = document.getElementById("inventory-badge");
+    if (badge) badge.textContent = inventoryData.length + " active";
     if (!tbody) return;
-    if (!shipmentsData.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No active shipments.</td></tr>'; return; }
-    tbody.innerHTML = shipmentsData.map(function(s) {
+    if (!inventoryData.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No active inventory.</td></tr>'; return; }
+    tbody.innerHTML = inventoryData.map(function(s) {
       return '<tr><td class="tx-id">' + s.id + '</td><td>' + s.origin + '</td><td>' + s.dest + '</td><td>' + s.type + '</td><td>' + s.weight + '</td><td>' + s.eta + '</td><td><span class="status ' + s.status + '">' + s.statusLabel + '</span></td></tr>';
     }).join("");
   }
@@ -1328,28 +1328,28 @@ document.addEventListener("DOMContentLoaded", function() {
     if (!tbody) return;
     if (!customersData.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No customers on record.</td></tr>'; return; }
     tbody.innerHTML = customersData.map(function(c) {
-      return '<tr><td style="font-weight:700">' + c.name + '</td><td>' + c.industry + '</td><td style="color:var(--accent);font-size:12px">' + c.contact + '</td><td>' + c.shipments + '</td><td class="price-cell">' + c.spend + '</td><td>&#11088; ' + c.rating + '</td><td><span class="status ' + c.status + '">' + c.statusLabel + '</span></td></tr>';
+      return '<tr><td style="font-weight:700">' + c.name + '</td><td>' + c.industry + '</td><td style="color:var(--accent);font-size:12px">' + c.contact + '</td><td>' + c.inventory + '</td><td class="price-cell">' + c.spend + '</td><td>&#11088; ' + c.rating + '</td><td><span class="status ' + c.status + '">' + c.statusLabel + '</span></td></tr>';
     }).join("");
   }
 
   // Initial renders
   renderReports();
-  renderShipments();
+  renderInventory();
   renderFleet();
   renderCustomers();
 
-  // Wire up "Book New Shipment" form to add to shipmentsData
-  var bookShipBtn = document.querySelector('#page-shipments .btn-primary');
+  // Wire up "Book New Shipment" form to add to inventoryData
+  var bookShipBtn = document.querySelector('#page-inventory .btn-primary');
   if (bookShipBtn) {
     bookShipBtn.addEventListener("click", function() {
-      var inputs = document.querySelectorAll('#page-shipments .form-input');
+      var inputs = document.querySelectorAll('#page-inventory .form-input');
       var origin = inputs[0] ? inputs[0].value.trim() : "";
       var dest   = inputs[1] ? inputs[1].value.trim() : "";
       if (!origin || !dest) { window.showToast("Please enter origin and destination.", "error"); return; }
-      var stype  = document.querySelector('#page-shipments .form-select') ? document.querySelector('#page-shipments .form-select').value : "Freight";
+      var stype  = document.querySelector('#page-inventory .form-select') ? document.querySelector('#page-inventory .form-select').value : "Freight";
       var newId  = "SHP-" + String(Math.floor(Math.random()*90000)+10000);
-      shipmentsData.unshift({id:newId, origin:origin, dest:dest, type:stype, weight:"—", eta:"TBD", status:"active", statusLabel:"Scheduled", seed:false});
-      renderShipments();
+      inventoryData.unshift({id:newId, origin:origin, dest:dest, type:stype, weight:"—", eta:"TBD", status:"active", statusLabel:"Scheduled", seed:false});
+      renderInventory();
       inputs[0].value = ""; inputs[1].value = "";
       window.showToast("Shipment " + newId + " booked.", "success");
     });
@@ -1382,7 +1382,7 @@ document.addEventListener("DOMContentLoaded", function() {
       var contact = inputs[1] ? inputs[1].value.trim() : "";
       if (!name) { window.showToast("Please enter a company name.", "error"); return; }
       var industry = document.querySelector('#page-customers .input-card:first-child .form-select') ? document.querySelector('#page-customers .input-card:first-child .form-select').value : "Other";
-      customersData.push({name:name, industry:industry, contact:contact||"—", shipments:0, spend:"$0", rating:"—", status:"active", statusLabel:"Active", seed:false});
+      customersData.push({name:name, industry:industry, contact:contact||"—", inventory:0, spend:"$0", rating:"—", status:"active", statusLabel:"Active", seed:false});
       renderCustomers();
       inputs.forEach(function(i){ i.value = ""; });
       window.showToast("Customer account created.", "success");
@@ -1417,7 +1417,7 @@ document.addEventListener("DOMContentLoaded", function() {
       entries = [];
       // Other tabs — remove non-seed rows only
       reportsData   = reportsData.filter(function(r){ return r.seed; });
-      shipmentsData = shipmentsData.filter(function(s){ return s.seed; });
+      inventoryData = inventoryData.filter(function(s){ return s.seed; });
       fleetData     = fleetData.filter(function(v){ return v.seed; });
       customersData = customersData.filter(function(c){ return c.seed; });
     } else {
@@ -1426,13 +1426,13 @@ document.addEventListener("DOMContentLoaded", function() {
       persistAdditionalTransactions();
       entries       = [];
       reportsData   = [];
-      shipmentsData = [];
+      inventoryData = [];
       fleetData     = [];
       customersData = [];
     }
     // Re-render all tabs
     renderTable(); updateKPIs(); renderEntries();
-    renderReports(); renderShipments(); renderFleet(); renderCustomers();
+    renderReports(); renderInventory(); renderFleet(); renderCustomers();
     // Reset dashboard form inputs
     ["prod-name","prod-price","prod-qty"].forEach(function(id){
       var el = document.getElementById(id);
@@ -1468,8 +1468,8 @@ document.addEventListener("DOMContentLoaded", function() {
     else if (rb) removeEntry(parseInt(rb.dataset.id));
   });
   document.getElementById("clear-ongoing-btn").addEventListener("click", function() {
-    if (!entries.length) { window.showToast("No ongoing shipments to clear."); return; }
-    entries = []; renderEntries(); window.showToast("All ongoing shipments cleared.");
+    if (!entries.length) { window.showToast("No ongoing inventory to clear."); return; }
+    entries = []; renderEntries(); window.showToast("All ongoing inventory cleared.");
   });
   document.getElementById("clear-tx-btn").addEventListener("click", function() {
     if (!transactions.length) { window.showToast("No transactions to clear."); return; }
