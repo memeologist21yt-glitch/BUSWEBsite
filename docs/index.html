@@ -720,9 +720,10 @@ document.addEventListener("DOMContentLoaded", function() {
       return parsed.filter(function(tx) {
         return tx && typeof tx.id === "string" && typeof tx.customer === "string" &&
           typeof tx.product === "string" && typeof tx.category === "string" &&
-          !isNaN(Number(tx.amount)) && typeof tx.date === "string" && typeof tx.status === "string";
+          !isNaN(Number(tx.amount)) && typeof tx.date === "string" && tx.status === "completed";
       }).map(function(tx) {
         tx.amount = Number(tx.amount);
+        tx.status = "completed";
         tx.seed = false;
         return tx;
       });
@@ -733,7 +734,9 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   function persistAdditionalTransactions() {
-    var additionalTransactions = transactions.filter(function(tx) { return !tx.seed; }).map(function(tx) {
+    var additionalTransactions = transactions.filter(function(tx) {
+      return !tx.seed && tx.status === "completed";
+    }).map(function(tx) {
       return {
         id: tx.id,
         customer: tx.customer,
