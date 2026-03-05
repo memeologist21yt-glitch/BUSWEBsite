@@ -709,7 +709,61 @@ document.addEventListener("DOMContentLoaded", function() {
     {id:"TXN-00813",customer:"Bluth Company",product:"Cold Chain — Pharma",category:"Cold Chain",amount:3150,date:"2026-02-21",status:"completed"},
     {id:"TXN-00812",customer:"Pied Piper",product:"Courier — Same Day",category:"Courier",amount:9900,date:"2026-02-20",status:"completed"},
   ];
-  var transactions = SEED.slice();
+  var ADDITIONAL_TRANSACTIONS_STORAGE_KEY = "abc-logistics:additional-transactions";
+  var SHIPMENT_DESCRIPTION_STORAGE_KEY = "abc-logistics:shipment-description-draft";
+
+  function parseStoredAdditionalTransactions(raw) {
+    if (!raw) return [];
+    try {
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(function(tx) {
+        return tx && typeof tx.id === "string" && typeof tx.customer === "string" &&
+          typeof tx.product === "string" && typeof tx.category === "string" &&
+          !isNaN(Number(tx.amount)) && typeof tx.date === "string" && typeof tx.status === "string";
+      }).map(function(tx) {
+        tx.amount = Number(tx.amount);
+        tx.seed = false;
+        return tx;
+      });
+    } catch (err) {
+      console.log(err);
+      return [];
+    }
+  }
+
+  function persistAdditionalTransactions() {
+    var additionalTransactions = transactions.filter(function(tx) { return !tx.seed; }).map(function(tx) {
+      return {
+        id: tx.id,
+        customer: tx.customer,
+        product: tx.product,
+        category: tx.category,
+        amount: Number(tx.amount),
+        date: tx.date,
+        status: tx.status
+      };
+    });
+    localStorage.setItem(ADDITIONAL_TRANSACTIONS_STORAGE_KEY, JSON.stringify(additionalTransactions));
+  }
+
+  function setupShipmentDescriptionPersistence() {
+    var descriptionInput = document.getElementById("prod-name");
+    if (!descriptionInput) return;
+    var savedDescription = localStorage.getItem(SHIPMENT_DESCRIPTION_STORAGE_KEY);
+    if (savedDescription !== null) {
+      descriptionInput.value = savedDescription;
+    }
+    descriptionInput.addEventListener("input", function() {
+      localStorage.setItem(SHIPMENT_DESCRIPTION_STORAGE_KEY, descriptionInput.value);
+    });
+  }
+
+  var additionalTransactions = parseStoredAdditionalTransactions(localStorage.getItem(ADDITIONAL_TRANSACTIONS_STORAGE_KEY));
+  var transactions = SEED.map(function(tx) {
+    tx.seed = true;
+    return tx;
+  }).concat(additionalTransactions);
   var entries = [];
 
   function setupNumberInputPersistence() {
@@ -732,6 +786,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 
   setupNumberInputPersistence();
+  setupShipmentDescriptionPersistence();
 
   // TABLE
   function renderTable() {
@@ -1089,6 +1144,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     entries.push({ id: Date.now(), name: name, price: price, qty: qty, cat: cat });
     nEl.value = ""; pEl.value = ""; qEl.value = 1;
+    localStorage.setItem(SHIPMENT_DESCRIPTION_STORAGE_KEY, "");
     updateSubtotal();
     renderEntries();
     window.showToast("Shipment added to ongoing list.", "success");
@@ -1108,16 +1164,17 @@ document.addEventListener("DOMContentLoaded", function() {
           id: "TXN-" + String(Math.floor(Math.random() * 90000) + 10000),
           customer: "ABC Logistics",
           product: e.qty > 1 ? e.name + " (" + (i+1) + "/" + e.qty + ")" : e.name,
-          category: e.cat, amount: e.price, date: today, status: "completed"
+          category: e.cat, amount: e.price, date: today, status: "completed", seed: false
         });
       }
     } else {
       transactions.unshift({
         id: "TXN-" + String(Math.floor(Math.random() * 90000) + 10000),
         customer: "ABC Logistics", product: e.name + " x" + e.qty,
-        category: e.cat, amount: e.price * e.qty, date: today, status: "completed"
+        category: e.cat, amount: e.price * e.qty, date: today, status: "completed", seed: false
       });
     }
+    persistAdditionalTransactions();
     renderTable();
     updateKPIs();
     window.showToast("Shipment marked as completed.", "success");
@@ -1305,6 +1362,7 @@ document.addEventListener("DOMContentLoaded", function() {
       // Dashboard
       var seedIds = SEED.map(function(t){ return t.id; });
       transactions = transactions.filter(function(t){ return seedIds.indexOf(t.id) !== -1; });
+      persistAdditionalTransactions();
       entries = [];
       // Other tabs — remove non-seed rows only
       reportsData   = reportsData.filter(function(r){ return r.seed; });
@@ -1314,6 +1372,7 @@ document.addEventListener("DOMContentLoaded", function() {
     } else {
       // Wipe everything
       transactions  = [];
+      persistAdditionalTransactions();
       entries       = [];
       reportsData   = [];
       shipmentsData = [];
@@ -1363,7 +1422,7 @@ document.addEventListener("DOMContentLoaded", function() {
   });
   document.getElementById("clear-tx-btn").addEventListener("click", function() {
     if (!transactions.length) { window.showToast("No transactions to clear."); return; }
-    transactions = []; renderTable(); updateKPIs(); window.showToast("All transactions cleared.");
+    transactions = []; persistAdditionalTransactions(); renderTable(); updateKPIs(); window.showToast("All transactions cleared.");
   });
 
   // Clear Data — inline confirmation with scope dropdown
