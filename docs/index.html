@@ -710,6 +710,7 @@ document.addEventListener("DOMContentLoaded", function() {
     {id:"TXN-00812",customer:"Pied Piper",product:"Courier — Same Day",category:"Courier",amount:9900,date:"2026-02-20",status:"completed"},
   ];
   var ADDITIONAL_TRANSACTIONS_STORAGE_KEY = "abc-logistics:additional-transactions";
+  var RECENT_TRANSACTIONS_STORAGE_KEY = "abc-logistics:recent-transactions";
   var SHIPMENT_DESCRIPTION_STORAGE_KEY = "abc-logistics:inventory-description-draft";
   var SHIPMENT_PRICE_STORAGE_KEY = "abc-logistics:inventory-price-draft";
   var SHIPMENT_QUANTITY_STORAGE_KEY = "abc-logistics:inventory-quantity-draft";
@@ -736,10 +737,36 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  function persistAdditionalTransactions() {
-    var additionalTransactions = transactions.filter(function(tx) {
-      return !tx.seed && tx.status === "completed";
-    }).map(function(tx) {
+  function parseStoredRecentTransactions(raw) {
+    if (!raw) return null;
+    try {
+      var parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return null;
+      var normalized = parsed.filter(function(tx) {
+        return tx && typeof tx.id === "string" && typeof tx.customer === "string" &&
+          typeof tx.product === "string" && typeof tx.category === "string" &&
+          !isNaN(Number(tx.amount)) && typeof tx.date === "string" && typeof tx.status === "string";
+      }).map(function(tx) {
+        return {
+          id: tx.id,
+          customer: tx.customer,
+          product: tx.product,
+          category: tx.category,
+          amount: Number(tx.amount),
+          date: tx.date,
+          status: tx.status,
+          seed: Boolean(tx.seed)
+        };
+      });
+      return normalized;
+    } catch (err) {
+      console.log(err);
+      return null;
+    }
+  }
+
+  function persistRecentTransactions() {
+    var allTransactions = transactions.map(function(tx) {
       return {
         id: tx.id,
         customer: tx.customer,
@@ -747,8 +774,13 @@ document.addEventListener("DOMContentLoaded", function() {
         category: tx.category,
         amount: Number(tx.amount),
         date: tx.date,
-        status: tx.status
+        status: tx.status,
+        seed: Boolean(tx.seed)
       };
+    });
+    localStorage.setItem(RECENT_TRANSACTIONS_STORAGE_KEY, JSON.stringify(allTransactions));
+    var additionalTransactions = allTransactions.filter(function(tx) {
+      return !tx.seed && tx.status === "completed";
     });
     localStorage.setItem(ADDITIONAL_TRANSACTIONS_STORAGE_KEY, JSON.stringify(additionalTransactions));
   }
@@ -801,11 +833,13 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
+  var storedRecentTransactions = parseStoredRecentTransactions(localStorage.getItem(RECENT_TRANSACTIONS_STORAGE_KEY));
   var additionalTransactions = parseStoredAdditionalTransactions(localStorage.getItem(ADDITIONAL_TRANSACTIONS_STORAGE_KEY));
-  var transactions = SEED.map(function(tx) {
+  var defaultTransactions = SEED.map(function(tx) {
     tx.seed = true;
     return tx;
   }).concat(additionalTransactions);
+  var transactions = storedRecentTransactions !== null ? storedRecentTransactions : defaultTransactions;
   var ONGOING_ENTRIES_STORAGE_KEY = "abc-logistics:ongoing-inventory-entries";
   var DASHBOARD_RANGE_STORAGE_KEY = "abc-logistics:dashboard-range";
   var entries = parseStoredEntries(localStorage.getItem(ONGOING_ENTRIES_STORAGE_KEY));
@@ -1290,7 +1324,7 @@ document.addEventListener("DOMContentLoaded", function() {
         category: e.cat, amount: e.price * e.qty, date: today, status: "completed", seed: false
       });
     }
-    persistAdditionalTransactions();
+    persistRecentTransactions();
     renderTable();
     updateKPIs();
     window.showToast("Inventory item marked as completed.", "success");
@@ -1487,7 +1521,7 @@ document.addEventListener("DOMContentLoaded", function() {
       // Dashboard
       var seedIds = SEED.map(function(t){ return t.id; });
       transactions = transactions.filter(function(t){ return seedIds.indexOf(t.id) !== -1; });
-      persistAdditionalTransactions();
+      persistRecentTransactions();
       entries = [];
       persistEntries();
       // Other tabs — remove non-seed rows only
@@ -1498,7 +1532,7 @@ document.addEventListener("DOMContentLoaded", function() {
     } else {
       // Wipe everything
       transactions  = [];
-      persistAdditionalTransactions();
+      persistRecentTransactions();
       entries       = [];
       persistEntries();
       reportsData   = [];
@@ -1555,7 +1589,7 @@ document.addEventListener("DOMContentLoaded", function() {
   });
   document.getElementById("clear-tx-btn").addEventListener("click", function() {
     if (!transactions.length) { window.showToast("No transactions to clear."); return; }
-    transactions = []; persistAdditionalTransactions(); renderTable(); updateKPIs(); window.showToast("All transactions cleared.");
+    transactions = []; persistRecentTransactions(); renderTable(); updateKPIs(); window.showToast("All transactions cleared.");
   });
 
   // Clear Data — inline confirmation with scope dropdown
