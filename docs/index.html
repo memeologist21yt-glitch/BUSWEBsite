@@ -1475,7 +1475,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // ── CLEAR DATA (scope-aware, ALL TABS) ───────────────────────────────────
   function clearAllData(scope) {
- resetAnalytics();
+    resetAnalytics();
+    if (scope === "all") {
+      Object.keys(localStorage).forEach(function(key) {
+        if (key.indexOf("abc-logistics:") === 0) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     if (scope === "session") {
       // Dashboard
       var seedIds = SEED.map(function(t){ return t.id; });
@@ -1510,6 +1517,7 @@ document.addEventListener("DOMContentLoaded", function() {
     localStorage.setItem(SHIPMENT_DESCRIPTION_STORAGE_KEY, "");
     localStorage.setItem(SHIPMENT_PRICE_STORAGE_KEY, "");
     localStorage.setItem(SHIPMENT_QUANTITY_STORAGE_KEY, "1");
+    localStorage.setItem(SHIPMENT_TYPE_STORAGE_KEY, "Freight");
     updateSubtotal();
     if (scope === "session") {
       applyFilter("1y");
